@@ -1,0 +1,23 @@
+---
+engines:
+  duplication:
+    enabled: true
+    config:
+      languages:
+      - python
+  fixme:
+    enabled: true
+  markdownlint:
+    enabled: true
+  pep8:
+    enabled: true
+  radon:
+    enabled: true
+exclude_paths:
+  - .vscode
+  - .idea
+  - bin/
+  - dist/
+  - include/
+  - lib/
+  - venv/
