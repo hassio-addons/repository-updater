@@ -1,18 +1,14 @@
 # Community Hass.io Add-ons Repository Updater
 
 [![PyPi Release][pypi-shield]][pypi]
-![Project Stage][project-stage-shield]
-![Project Maintenance][maintenance-shield]
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]](LICENSE.md)
 
-[![Code Climate][codeclimate-shield]][codeclimate]
-[![Bountysource][bountysource-shield]][bountysource]
-[![Discord][discord-shield]][discord]
+![Project Stage][project-stage-shield]
+![Project Maintenance][maintenance-shield]
 
-[![Patreon][patreon-shield]][patreon]
-[![PayPal][paypal-shield]][paypal]
-[![Bitcoin][bitcoin-shield]][bitcoin]
+[![Discord][discord-shield]][discord]
+[![Community Forum][forum-shield]][forum]
 
 ## About
 
@@ -62,20 +58,20 @@ can be quite useful when using this tool in a CI server like; Travis,
 CircleCI or GitLab CI.
 
 ```bash
-$ docker run -it --rm hassioaddons/repository-updater:latest
+docker run -it --rm hassioaddons/repository-updater:latest
 ```
 
 All the usage information parameters from the previous chapter apply.
 For example, this shows the current version of the tool:
 
 ```bash
-$ docker run -it --rm hassioaddons/repository-updater:latest --version
+docker run -it --rm hassioaddons/repository-updater:latest --version
 ```
 
 ## Add-ons Repository Configuration
 
 In order for the Repository Updater to do its job, we need feed it some
-information. It needs to know which add-ons there are currently in the 
+information. It needs to know which add-ons there are currently in the
 add-ons repository and where each add-on is located on GitHub.
 
 Secondly, it needs to know the stability channel of the add-ons repository.
@@ -124,12 +120,12 @@ is automatically replaced internally by the Repository Updater.
 ## Add-ons Repository README template
 
 It is nice to have an up to date `README.md` file in your add-ons repository,
-but maintaining one, can be quite time-consuming. The Repository updater is 
+but maintaining one, can be quite time-consuming. The Repository updater is
 able to update the `README.md` file for you each run.
 
 This is done using a Jinja2 template. Simply create a file called `.README.j2`
 in the root of your add-ons repository. Most information is collected
-from the add-on `config.json` and GitHub repo. 
+from the add-on `config.json` and GitHub repo.
 
 A variable `addons` is passed into your template file upon rendering, containing
 a list of the following dictionaries:
@@ -143,10 +139,10 @@ a list of the following dictionaries:
 - **target**: The target directory of the add-on inside the add-ons repository
 - **image**: The (untouched) Docker Hub container image name
 - **images**: Dictionary of images per architecture
-    - **aarch64**: `aarch64` DockerHub image (if arch is supported)
-    - **amd64**: `amd64` DockerHub image (if arch is supported)
-    - **armhf**: `armhf` DockerHub image (if arch is supported)
-    - **i386**: `i386` DockerHub image (if arch is supported)
+  - **aarch64**: `aarch64` DockerHub image (if arch is supported)
+  - **amd64**: `amd64` DockerHub image (if arch is supported)
+  - **armhf**: `armhf` DockerHub image (if arch is supported)
+  - **i386**: `i386` DockerHub image (if arch is supported)
 - **version**: The version of the add-on
 - **commit**: Full SHA of the commit bound to the current version
 - **date**: Date and time of the above commit/version
@@ -162,10 +158,10 @@ add-on runs this tool upon build, ensuring the repositories are always up to
 date. Be sure to check some of the add-ons out as well to learn more about
 the whole setup.
 
-## Why do this all?
+## Why do this all
 
-Let me start by saying, there is nothing with the documented way of setting
-up a Hass.io add-ons repository. If you are just starting out developing
+Let me start by saying, there is nothing wrong with the documented way of
+setting up a Hass.io add-ons repository. If you are just starting out developing
 add-ons, please use the official documented way. You can always decide to
 change your workflow.
 
@@ -183,7 +179,7 @@ Nevertheless, there are some advantages using the alternative method:
   of automation allows us to focus completely on developing the actual add-on.
 - Availability of Beta and Edge channels for everyone who's interested or
   willing to test.
-  
+
 ## Known issues and limitations
 
 - The README template is currently mandatory in future releases this will
@@ -192,8 +188,9 @@ Nevertheless, there are some advantages using the alternative method:
 
 ## Changelog & Releases
 
-This repository keeps a [change log](CHANGELOG.md). The format of the log
-is based on [Keep a Changelog][keepchangelog].
+This repository keeps a change log using [GitHub's releases][releases]
+functionality. The format of the log is based on
+[Keep a Changelog][keepchangelog].
 
 Releases are based on [Semantic Versioning][semver], and use the format
 of ``MAJOR.MINOR.PATCH``. In a nutshell, the version will be incremented
@@ -264,30 +261,23 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-[bitcoin-shield]: https://img.shields.io/badge/donate-bitcoin-blue.svg
-[bitcoin]: https://blockchain.info/payment_request?address=3GVzgN6NpVtfXnyg5dQnaujtqVTEDBCtAH
-[bountysource-shield]: https://img.shields.io/bountysource/team/hassio-addons/activity.svg
-[bountysource]: https://www.bountysource.com/teams/hassio-addons/issues
-[codeclimate-shield]: https://img.shields.io/badge/code%20climate-protected-brightgreen.svg
-[codeclimate]: https://codeclimate.com/github/hassio-addons/repository-updater
 [commits-shield]: https://img.shields.io/github/commit-activity/y/hassio-addons/repository-updater.svg
 [commits]: https://github.com/hassio-addons/repository-updater/commits/master
 [contributors]: https://github.com/hassio-addons/repository-updater/graphs/contributors
 [discord-shield]: https://img.shields.io/discord/330944238910963714.svg
 [discord]: https://discord.gg/c5DvZ4e
+[forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg
+[forum]: https://community.home-assistant.io?u=frenck
 [frenck]: https://github.com/frenck
 [issue]: https://github.com/hassio-addons/repository-updater/issues
 [keepchangelog]: http://keepachangelog.com/en/1.0.0/
 [license-shield]: https://img.shields.io/github/license/hassio-addons/repository-updater.svg
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2018.svg
-[patreon-shield]: https://img.shields.io/badge/donate-patreon-blue.svg
-[patreon]: https://www.patreon.com/frenck
-[paypal-shield]: https://img.shields.io/badge/donate-paypal-blue.svg
-[paypal]: https://www.paypal.me/FranckNijhof
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-experimental-yellow.svg
-[reddit]: https://reddit.com/r/homeassistant
 [pypi-shield]: https://img.shields.io/pypi/v/repository-updater.svg
 [pypi]: https://pypi.org/project/repository-updater
+[reddit]: https://reddit.com/r/homeassistant
+[releases]: https://github.com/hassio-addons/repository-updater/releases
 [repository]: https://github.com/hassio-addons/repository
 [semver]: http://semver.org/spec/v2.0.0.html
 [token]: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
