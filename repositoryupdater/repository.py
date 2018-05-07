@@ -35,12 +35,12 @@ import tempfile
 from typing import List
 
 import click
-import crayons
-import yaml
 from git import Repo
 from github.GithubException import UnknownObjectException
 from github.Repository import Repository as GitHubRepository
 from jinja2 import Environment, FileSystemLoader
+import yaml
+import crayons
 
 from .addon import Addon
 from .const import CHANNELS
@@ -185,7 +185,9 @@ class Repository:
                    nl=False)
         addon_data = []
         for addon in self.addons:
-            addon_data.append(addon.get_template_data())
+            data = addon.get_template_data()
+            if data:
+                addon_data.append(addon.get_template_data())
 
         addon_data = sorted(addon_data, key=lambda x: x['name'])
 

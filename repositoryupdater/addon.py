@@ -33,14 +33,14 @@ import sys
 import urllib.request
 
 import click
-import crayons
-import semver
 from dateutil.parser import parse
 from git import Repo
 from github.Commit import Commit
 from github.GitRelease import GitRelease
 from github.GithubException import UnknownObjectException
 from github.Repository import Repository
+import crayons
+import semver
 
 from .const import CHANNEL_BETA, CHANNEL_EDGE
 from .dockerhub import DockerHub
@@ -80,6 +80,7 @@ class Addon:
         self.archs = ['aarch64', 'amd64', 'armhf', 'i386']
         self.latest_is_release = True
         self.updating = updating
+        self.current_version = None
 
         click.echo(
             "Loading add-on information from: %s" %
@@ -113,7 +114,7 @@ class Addon:
         self.generate_addon_changelog()
         self.current_version = self.latest_version
         self.current_release = self.latest_release
-        self.current_commit = self.current_commit
+        self.current_commit = self.latest_commit
 
     def __load_current_info(self):
         """Load current add-on version information and current config."""
@@ -123,35 +124,36 @@ class Addon:
             'config.json'
         )
 
-        if os.path.isfile(current_config_file):
-            current_config = json.load(open(current_config_file))
-            self.current_version = current_config['version']
-            self.name = current_config['name']
-            self.description = current_config['description']
-            self.slug = current_config['slug']
-            self.url = current_config['url']
-            if 'arch' in current_config:
-                self.archs = current_config['arch']
+        if not os.path.isfile(current_config_file):
+            return False
 
-        if self.current_version:
-            current_parsed_version = False
+        current_config = json.load(open(current_config_file))
+        self.current_version = current_config['version']
+        self.name = current_config['name']
+        self.description = current_config['description']
+        self.slug = current_config['slug']
+        self.url = current_config['url']
+        if 'arch' in current_config:
+            self.archs = current_config['arch']
+
+        current_parsed_version = False
+        try:
+            current_parsed_version = semver.parse(self.current_version)
+        except ValueError:
+            pass
+
+        if current_parsed_version:
             try:
-                current_parsed_version = semver.parse(self.current_version)
-            except ValueError:
-                pass
-
-            if current_parsed_version:
-                try:
-                    ref = self.addon_repository.get_git_ref(
-                        'tags/' + self.current_version)
-                except UnknownObjectException:
-                    ref = self.addon_repository.get_git_ref(
-                        'tags/v' + self.current_version)
-                self.current_commit = self.addon_repository.get_commit(
-                    ref.object.sha)
-            else:
-                self.current_commit = self.addon_repository.get_commit(
-                    self.current_version)
+                ref = self.addon_repository.get_git_ref(
+                    'tags/' + self.current_version)
+            except UnknownObjectException:
+                ref = self.addon_repository.get_git_ref(
+                    'tags/v' + self.current_version)
+            self.current_commit = self.addon_repository.get_commit(
+                ref.object.sha)
+        else:
+            self.current_commit = self.addon_repository.get_commit(
+                self.current_version)
 
         click.echo('Current version: %s (%s)' % (
             crayons.magenta(self.current_version),
@@ -330,6 +332,9 @@ class Addon:
     def get_template_data(self):
         """Return a dictionary with add-on information."""
         data = {}
+        if not self.current_version:
+            return data
+
         data['name'] = self.name
         data['description'] = self.description
         data['url'] = self.url
