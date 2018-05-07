@@ -39,6 +39,7 @@ from github.Commit import Commit
 from github.GitRelease import GitRelease
 from github.GithubException import UnknownObjectException
 from github.Repository import Repository
+from jinja2 import Environment, BaseLoader
 import crayons
 import semver
 
@@ -67,6 +68,7 @@ class Addon:
     description: str
     slug: str
     url: str
+    channel: str
 
     def __init__(self, repository: Repo, repository_target: str, image: str,
                  addon_repository: Repository, addon_target: str, channel: str,
@@ -80,6 +82,7 @@ class Addon:
         self.archs = ['aarch64', 'amd64', 'armhf', 'i386']
         self.latest_is_release = True
         self.updating = updating
+        self.channel = channel
         self.current_version = None
 
         click.echo(
@@ -111,6 +114,7 @@ class Addon:
         self.ensure_addon_dir()
         self.generate_addon_config()
         self.update_static_files()
+        self.generate_readme()
         self.generate_addon_changelog()
         self.current_version = self.latest_version
         self.current_release = self.latest_release
@@ -329,6 +333,35 @@ class Addon:
         click.echo(crayons.green('OK!'))
         return True
 
+    def generate_readme(self):
+        """Re-generate the add-on readme based on a template."""
+        click.echo('Re-generating add-on README.md file...',
+                   nl=False)
+
+        addon_file = os.path.join(self.addon_target, '.README.j2')
+        local_file = os.path.join(self.repository.working_dir,
+                                  self.repository_target, 'README.md')
+
+        try:
+            remote_file = self.addon_repository.get_file_contents(
+                addon_file, self.latest_commit.sha)
+        except UnknownObjectException:
+            click.echo(crayons.blue('Skipping'))
+            return
+
+        data = self.get_template_data()
+
+        jinja = Environment(loader=BaseLoader,
+                            trim_blocks=True,
+                            extensions=['jinja2.ext.loopcontrols'])
+
+        with open(local_file, 'w') as outfile:
+            outfile.write(
+                jinja.from_string(remote_file.decoded_content).render(**data)
+            )
+
+        click.echo(crayons.green('Done'))
+
     def get_template_data(self):
         """Return a dictionary with add-on information."""
         data = {}
@@ -336,6 +369,7 @@ class Addon:
             return data
 
         data['name'] = self.name
+        data['channel'] = self.channel
         data['description'] = self.description
         data['url'] = self.url
         data['repo'] = self.addon_repository.html_url
