@@ -107,6 +107,7 @@ class Addon:
                 'aborting...'))
             sys.exit(1)
 
+        self.ensure_addon_dir()
         self.generate_addon_config()
         self.update_static_files()
         self.generate_addon_changelog()
@@ -214,6 +215,16 @@ class Addon:
         return self.updating and (
             force or self.current_version != self.latest_version or
             self.current_commit != self.latest_commit)
+
+    def ensure_addon_dir(self):
+        """Ensure the add-on target directory exists."""
+        addon_path = os.path.join(
+            self.repository.working_dir,
+            self.repository_target
+        )
+
+        if not os.path.exists(addon_path):
+            os.mkdir(addon_path)
 
     def generate_addon_config(self):
         """Generate add-on configuration file."""
