@@ -182,8 +182,6 @@ Nevertheless, there are some advantages using the alternative method:
 
 ## Known issues and limitations
 
-- The README template is currently mandatory in future releases this will
-  be made optional.
 - Any kind of testing and linting... is missing...
 
 ## Changelog & Releases

@@ -183,6 +183,12 @@ class Repository:
         """Re-generate the repository readme based on a template."""
         click.echo('Re-generating add-on repository README.md file...',
                    nl=False)
+
+        if not os.path.exists(
+                os.path.join(self.git_repo.working_dir, '.README.j2')):
+            click.echo(crayons.blue('skipping'))
+            return
+
         addon_data = []
         for addon in self.addons:
             data = addon.get_template_data()
