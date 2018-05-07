@@ -55,6 +55,7 @@ class Repository:
     github_repository: GitHubRepository
     git_repo: Repo
     force: bool
+    channel: str
 
     def __init__(self, github: GitHub, repository: str, addon: str,
                  force: bool):
@@ -146,8 +147,9 @@ class Repository:
                         'channel']))
             sys.exit(1)
 
+        self.channel = config['channel']
         click.echo(
-            'Repository channel: %s' % crayons.magenta(config['channel']))
+            'Repository channel: %s' % crayons.magenta(self.channel))
 
         if addon:
             click.echo(
@@ -162,7 +164,7 @@ class Repository:
                     self.git_repo, target, addon_config['image'],
                     self.github.get_repo(addon_config['repository']),
                     addon_config['target'],
-                    config['channel'],
+                    self.channel,
                     (not addon or
                      addon_config['repository'] == addon or
                      target == addon)
@@ -204,7 +206,15 @@ class Repository:
         with open(os.path.join(self.git_repo.working_dir, 'README.md'),
                   'w') as outfile:
             outfile.write(
-                jinja.get_template('.README.j2').render(addons=addon_data))
+                jinja.get_template('.README.j2').render(
+                    addons=addon_data,
+                    channel=self.channel,
+                    description=self.github_repository.description,
+                    homepage=self.github_repository.homepage,
+                    issues=self.github_repository.issues_url,
+                    name=self.github_repository.name,
+                    repo=self.github_repository.html_url,
+                ))
 
         click.echo(crayons.green('Done'))
 

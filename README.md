@@ -127,8 +127,19 @@ This is done using a Jinja2 template. Simply create a file called `.README.j2`
 in the root of your add-ons repository. Most information is collected
 from the add-on `config.json` and GitHub repo.
 
-A variable `addons` is passed into your template file upon rendering, containing
-a list of the following dictionaries:
+The following variables are available in your templates and are passed into it
+upon rendering your template.
+
+- **addons**: A list of add-ons in this add-ons repository
+- **channel**: The channel type of this add-ons repository
+- **description**: The GitHub add-ons repository description
+- **homepage**: The GitHub add-ons repository specified homepage URL
+- **issues**: The URL to the issues listing of the GitHub add-ons repository
+- **name**: The full GitHub name, e.g., `hassio-addons/repository`
+- **repo**: The full URL to the GitHub add-ons repository
+
+In the above variables, a list of `addons` was specified. Each item in this 
+list contains the following variables: 
 
 - **name**: Name of the add-on
 - **description**: Description of the add-on
