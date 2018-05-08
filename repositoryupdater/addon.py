@@ -39,6 +39,7 @@ from github.Commit import Commit
 from github.GitRelease import GitRelease
 from github.GithubException import UnknownObjectException
 from github.Repository import Repository
+from jinja2 import Environment, BaseLoader
 import crayons
 import semver
 
@@ -67,6 +68,7 @@ class Addon:
     description: str
     slug: str
     url: str
+    channel: str
 
     def __init__(self, repository: Repo, repository_target: str, image: str,
                  addon_repository: Repository, addon_target: str, channel: str,
@@ -80,7 +82,10 @@ class Addon:
         self.archs = ['aarch64', 'amd64', 'armhf', 'i386']
         self.latest_is_release = True
         self.updating = updating
+        self.channel = channel
         self.current_version = None
+        self.latest_release = None
+        self.latest_commit = None
 
         click.echo(
             "Loading add-on information from: %s" %
@@ -95,7 +100,7 @@ class Addon:
             else:
                 click.echo(crayons.green('This add-on is up to date.'))
 
-    def update(self, force):
+    def update(self):
         """Update this add-on inside the given add-on repository."""
         if not self.updating:
             click.echo(crayons.red(
@@ -108,13 +113,15 @@ class Addon:
                 'aborting...'))
             sys.exit(1)
 
-        self.ensure_addon_dir()
-        self.generate_addon_config()
-        self.update_static_files()
-        self.generate_addon_changelog()
         self.current_version = self.latest_version
         self.current_release = self.latest_release
         self.current_commit = self.latest_commit
+
+        self.ensure_addon_dir()
+        self.generate_addon_config()
+        self.update_static_files()
+        self.generate_readme()
+        self.generate_addon_changelog()
 
     def __load_current_info(self):
         """Load current add-on version information and current config."""
@@ -125,6 +132,7 @@ class Addon:
         )
 
         if not os.path.isfile(current_config_file):
+            click.echo('Current version: %s' % crayons.yellow('Not available'))
             return False
 
         current_config = json.load(open(current_config_file))
@@ -181,7 +189,8 @@ class Addon:
 
         if channel == CHANNEL_EDGE:
             last_commit = self.addon_repository.get_commits()[0]
-            if last_commit.sha != self.latest_commit.sha:
+            if not self.latest_commit \
+                    or last_commit.sha != self.latest_commit.sha:
                 self.latest_version = last_commit.sha[:7]
                 self.latest_commit = last_commit
                 self.latest_is_release = False
@@ -234,13 +243,13 @@ class Addon:
         try:
             config = self.addon_repository.get_file_contents(
                 os.path.join(self.addon_target, 'config.json'),
-                self.latest_commit.sha)
+                self.current_commit.sha)
         except UnknownObjectException:
             click.echo(crayons.red('Failed!'))
             sys.exit(1)
 
         config = json.loads(config.decoded_content)
-        config['version'] = self.latest_version
+        config['version'] = self.current_version
         config['image'] = self.image
 
         with open(os.path.join(self.repository.working_dir,
@@ -256,13 +265,13 @@ class Addon:
         click.echo('Generating add-on changelog...', nl=False)
         changelog = ""
         if self.latest_is_release:
-            changelog = self.latest_release.body
+            changelog = self.current_release.body
         elif self.latest_release:
             compare = self.addon_repository.compare(
-                self.latest_release.tag_name,
-                self.latest_commit.sha)
+                self.current_release.tag_name,
+                self.current_commit.sha)
             changelog = "# Changelog since %s\n\n" % \
-                        self.latest_release.tag_name
+                        self.current_release.tag_name
             for commit in reversed(compare.commits):
                 changelog += "%s - [%s](%s) by [@%s](%s)\n> %s \n\n" % (
                     parse(commit.last_modified).strftime('%Y/%m/%d %H:%M %Z'),
@@ -272,12 +281,13 @@ class Addon:
                 )
         else:
             changelog += "%s - [%s](%s) by [@%s](%s)\n> %s \n\n" % (
-                parse(self.latest_commit.last_modified).strftime(
+                parse(self.current_commit.last_modified).strftime(
                     '%Y/%m/%d %H:%M %Z'),
-                self.latest_commit.commit.sha[:7], self.latest_commit.html_url,
-                self.latest_commit.author.login,
-                self.latest_commit.author.html_url,
-                self.latest_commit.commit.message
+                self.current_commit.commit.sha[:7],
+                self.current_commit.html_url,
+                self.current_commit.author.login,
+                self.current_commit.author.html_url,
+                self.current_commit.commit.message
             )
 
         with open(os.path.join(self.repository.working_dir,
@@ -302,7 +312,7 @@ class Addon:
         remote_file = False
         try:
             remote_file = self.addon_repository.get_file_contents(
-                addon_file, self.latest_commit.sha)
+                addon_file, self.current_commit.sha)
         except UnknownObjectException:
             pass
 
@@ -312,6 +322,8 @@ class Addon:
         elif os.path.isfile(local_file):
             os.remove(os.path.join(local_file))
             click.echo(crayons.yellow('Removed'))
+        else:
+            click.echo(crayons.blue('Skipping'))
 
     def latest_is_live(self):
         """Check if the latest add-on version is actually on Docker Hub."""
@@ -322,12 +334,43 @@ class Addon:
             image = self.image.replace('{arch}', arch)
             if not DockerHub.image_exists_on_dockerhub(
                     self.image.replace('{arch}', arch),
-                    self.latest_version):
+                    self.current_version):
                 click.echo(crayons.red(
-                    'Missing: %s:%s' % (image, self.latest_version)))
+                    'Missing: %s:%s' % (image, self.current_version)))
                 return False
         click.echo(crayons.green('OK!'))
         return True
+
+    def generate_readme(self):
+        """Re-generate the add-on readme based on a template."""
+        click.echo('Re-generating add-on README.md file...',
+                   nl=False)
+
+        addon_file = os.path.join(self.addon_target, '.README.j2')
+        local_file = os.path.join(self.repository.working_dir,
+                                  self.repository_target, 'README.md')
+
+        try:
+            remote_file = self.addon_repository.get_file_contents(
+                addon_file, self.current_commit.sha)
+        except UnknownObjectException:
+            click.echo(crayons.blue('Skipping'))
+            return
+
+        data = self.get_template_data()
+
+        jinja = Environment(loader=BaseLoader(),
+                            trim_blocks=True,
+                            extensions=['jinja2.ext.loopcontrols'])
+
+        with open(local_file, 'w') as outfile:
+            outfile.write(
+                jinja.from_string(
+                    remote_file.decoded_content.decode('utf8')
+                ).render(**data)
+            )
+
+        click.echo(crayons.green('Done'))
 
     def get_template_data(self):
         """Return a dictionary with add-on information."""
@@ -336,6 +379,7 @@ class Addon:
             return data
 
         data['name'] = self.name
+        data['channel'] = self.channel
         data['description'] = self.description
         data['url'] = self.url
         data['repo'] = self.addon_repository.html_url
