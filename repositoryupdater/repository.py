@@ -107,7 +107,7 @@ class Repository:
 
     def update_addon(self, addon):
         """Update repository for a specific add-on."""
-        addon.update(self.force)
+        addon.update()
         self.generate_readme()
 
         if addon.latest_is_release:
