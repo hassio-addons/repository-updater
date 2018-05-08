@@ -6,7 +6,7 @@ RUN \
         git=2.15.0-r1 \
     \
     && pip3 install \
-        repository-updater==0.1.2
+        repository-updater==0.2.0
 
 # Entrypoint
 ENTRYPOINT ["repository-updater"]

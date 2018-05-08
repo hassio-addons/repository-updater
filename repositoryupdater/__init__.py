@@ -37,7 +37,7 @@ Hass.io add-on repository approach.
 
 APP_NAME = 'repository-updater'
 APP_FULL_NAME = 'Community Hass.io Add-ons Repository Updater'
-APP_VERSION = '0.1.2'
+APP_VERSION = '0.2.0'
 APP_DESCRIPTION = __doc__
 
 __author__ = 'Franck Nijhof'
@@ -46,5 +46,5 @@ __copyright__ = 'Copyright 2018, Franck Nijhof'
 __license__ = 'MIT'
 __url__ = 'https://github.com/hassio-addons/repository-updater'
 __download__ = ('https://github.com/hassio-addons/repository-updater'
-                '/archive/0.1.2.tar.gz')
+                '/archive/0.2.0.tar.gz')
 __version__ = APP_VERSION
