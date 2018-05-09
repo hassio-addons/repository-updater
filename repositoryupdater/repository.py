@@ -96,7 +96,7 @@ class Repository:
         """Commit current Repository changes."""
         click.echo('Committing changes...', nl=False)
 
-        if not self.git_repo.is_dirty():
+        if not self.git_repo.is_dirty(untracked_files=True):
             click.echo(crayons.yellow('Skipped, no changes.'))
             return False
 
