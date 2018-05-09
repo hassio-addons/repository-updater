@@ -212,7 +212,7 @@ class Repository:
                     description=self.github_repository.description,
                     homepage=self.github_repository.homepage,
                     issues=self.github_repository.issues_url,
-                    name=self.github_repository.name,
+                    name=self.github_repository.full_name,
                     repo=self.github_repository.html_url,
                 ))
 
