@@ -107,15 +107,15 @@ class Addon:
                 'Cannot update add-on that was marked not being updated'))
             sys.exit(1)
 
-        if not self.latest_is_live():
+        self.current_version = self.latest_version
+        self.current_release = self.latest_release
+        self.current_commit = self.latest_commit
+
+        if not self.is_live():
             click.echo(crayons.red(
                 'Not all Docker images are available on DockerHub '
                 'aborting...'))
             sys.exit(1)
-
-        self.current_version = self.latest_version
-        self.current_release = self.latest_release
-        self.current_commit = self.latest_commit
 
         self.ensure_addon_dir()
         self.generate_addon_config()
@@ -325,7 +325,7 @@ class Addon:
         else:
             click.echo(crayons.blue('Skipping'))
 
-    def latest_is_live(self):
+    def is_live(self):
         """Check if the latest add-on version is actually on Docker Hub."""
         click.echo(
             'Checking if all Docker images are available on Docker Hub...',
