@@ -269,31 +269,20 @@ class Addon:
             changelog = self.current_release.body
         elif self.latest_release:
             compare = self.addon_repository.compare(
-                self.current_release.tag_name,
-                self.current_commit.sha)
-            changelog = "# Changelog since %s\n\n" % \
-                        self.current_release.tag_name
-            for commit in reversed(compare.commits):
-                changelog += "%s - [%s](%s) by [@%s](%s)\n> %s \n\n" % (
-                    parse(commit.last_modified).strftime('%Y/%m/%d %H:%M %Z'),
-                    commit.commit.sha[:7], commit.html_url,
-                    commit.author.login, commit.author.html_url,
-                    commit.commit.message
-                )
-        else:
-            changelog += "%s - [%s](%s) by [@%s](%s)\n> %s \n\n" % (
-                parse(self.current_commit.last_modified).strftime(
-                    '%Y/%m/%d %H:%M %Z'),
-                self.current_commit.commit.sha[:7],
-                self.current_commit.html_url,
-                self.current_commit.author.login,
-                self.current_commit.author.html_url,
-                self.current_commit.commit.message
+                self.current_release.tag_name, self.current_commit.sha
             )
+            changelog = "# Changelog since %s\n" % self.current_release.tag_name
+            for commit in reversed(compare.commits):
+                changelog += "- %s \n" % (commit.commit.message)
+        else:
+            changelog += "- %s\n" % (self.current_commit.commit.message)
 
-        with open(os.path.join(self.repository.working_dir,
-                               self.repository_target, 'CHANGELOG.md'),
-                  'w') as outfile:
+        with open(
+            os.path.join(
+                self.repository.working_dir, self.repository_target, "CHANGELOG.md"
+            ),
+            "w",
+        ) as outfile:
             outfile.write(changelog)
 
         click.echo(crayons.green('Done'))
