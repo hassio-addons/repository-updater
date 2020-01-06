@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2018 Franck Nijhof
+# Copyright (c) 2018-2020 Franck Nijhof
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -40,11 +40,5 @@ APP_FULL_NAME = 'Community Hass.io Add-ons Repository Updater'
 APP_VERSION = '0.2.1'
 APP_DESCRIPTION = __doc__
 
-__author__ = 'Franck Nijhof'
-__email__ = 'frenck@addons.community'
-__copyright__ = 'Copyright 2018, Franck Nijhof'
-__license__ = 'MIT'
-__url__ = 'https://github.com/hassio-addons/repository-updater'
-__download__ = ('https://github.com/hassio-addons/repository-updater'
-                '/archive/0.2.1.tar.gz')
+__copyright__ = "Copyright 2018-2020, Franck Nijhof"
 __version__ = APP_VERSION
