@@ -170,10 +170,11 @@ class Addon:
     def __load_latest_info(self, channel: str):
         """Determine latest available add-on version and config."""
         for release in self.addon_repository.get_releases():
-            self.latest_version = release.tag_name.lstrip('v')
-            prerelease = (release.prerelease and
-                          semver.parse_version_info(
-                              self.latest_version).prerelease)
+            self.latest_version = release.tag_name.lstrip("v")
+            prerelease = (
+                release.prerelease
+                or semver.parse_version_info(self.latest_version).prerelease
+            )
             if release.draft or (prerelease and channel != CHANNEL_BETA):
                 continue
             self.latest_release = release
