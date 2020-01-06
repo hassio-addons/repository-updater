@@ -138,8 +138,8 @@ upon rendering your template.
 - **name**: The full GitHub name, e.g., `hassio-addons/repository`
 - **repo**: The full URL to the GitHub add-ons repository
 
-In the above variables, a list of `addons` was specified. Each item in this 
-list contains the following variables: 
+In the above variables, a list of `addons` was specified. Each item in this
+list contains the following variables:
 
 - **name**: Name of the add-on
 - **description**: Description of the add-on
@@ -281,7 +281,7 @@ SOFTWARE.
 [issue]: https://github.com/hassio-addons/repository-updater/issues
 [keepchangelog]: http://keepachangelog.com/en/1.0.0/
 [license-shield]: https://img.shields.io/github/license/hassio-addons/repository-updater.svg
-[maintenance-shield]: https://img.shields.io/maintenance/yes/2018.svg
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2020.svg
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-experimental-yellow.svg
 [pypi-shield]: https://img.shields.io/pypi/v/repository-updater.svg
 [pypi]: https://pypi.org/project/repository-updater
