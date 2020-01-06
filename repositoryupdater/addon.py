@@ -79,7 +79,7 @@ class Addon:
         self.image = image
         self.repository = repository
         self.addon_repository = addon_repository
-        self.archs = ['aarch64', 'amd64', 'armhf', 'i386']
+        self.archs = ["aarch64", "amd64", "armhf", "armv7", "i386"]
         self.latest_is_release = True
         self.updating = updating
         self.channel = channel
