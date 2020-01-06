@@ -1,12 +1,12 @@
-FROM python:3.6-alpine3.7
+FROM python:3.8-alpine3.11
 
 # Setup base
 RUN \
     apk add --no-cache \
-        git=2.15.0-r1 \
+        git=2.24.1-r0 \
     \
     && pip3 install \
-        repository-updater==0.2.1
+        repository-updater==0.3.0
 
 # Entrypoint
 ENTRYPOINT ["repository-updater"]
