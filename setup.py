@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # MIT License
 #
@@ -59,14 +58,14 @@ setup(
     ],
     packages=find_packages(),
     install_requires=[
-        'click==6.7',
-        'crayons==0.1.2',
-        'GitPython==2.1.9',
-        'Jinja2==2.10',
-        'PyGithub==1.39',
-        'python-dateutil==2.7.2',
-        'PyYAML==3.12',
-        'semver==2.7.9',
+        'click==7.0',
+        'crayons==0.3.0',
+        'GitPython==3.0.5',
+        'Jinja2==2.10.3',
+        'PyGithub==1.45',
+        'python-dateutil==2.8.1',
+        'PyYAML==5.2',
+        'semver==2.9.0',
     ],
     entry_points='''
         [console_scripts]

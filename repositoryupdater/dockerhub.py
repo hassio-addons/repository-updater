@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # MIT License
 #
@@ -37,10 +36,11 @@ class DockerHub:
     @staticmethod
     def image_exists_on_dockerhub(name, version):
         """Check if give image and version exists on Docker Hub."""
-        location = "https://registry.hub.docker.com/v2/repositories/" \
-            f"{name}/tags/{version}/"
+        location = (
+            f"https://registry.hub.docker.com/v2/repositories/{name}/tags/{version}/"
+        )
         request = urllib.request.Request(location)
-        request.get_method = lambda: 'HEAD'
+        request.get_method = lambda: "HEAD"
 
         try:
             urllib.request.urlopen(request)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # MIT License
 #
@@ -25,5 +24,5 @@
 """Repository Updater bootstrap."""
 from . import cli
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli.repository_updater(None, None, None, None)

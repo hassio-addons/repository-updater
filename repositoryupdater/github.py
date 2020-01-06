@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # MIT License
 #
@@ -32,8 +31,7 @@ functionality.
 from git import Repo
 from github import Github as PyGitHub
 from github import Repository
-from github.MainClass import DEFAULT_BASE_URL, DEFAULT_PER_PAGE, \
-    DEFAULT_TIMEOUT
+from github.MainClass import DEFAULT_BASE_URL, DEFAULT_PER_PAGE, DEFAULT_TIMEOUT
 
 
 class GitHub(PyGitHub):
@@ -41,33 +39,23 @@ class GitHub(PyGitHub):
 
     token: str
 
-    def __init__(self, login_or_token=None, password=None,
-                 base_url=DEFAULT_BASE_URL,
-                 timeout=DEFAULT_TIMEOUT,
-                 client_id=None, client_secret=None,
-                 user_agent='PyGithub/Python',
-                 per_page=DEFAULT_PER_PAGE,
-                 api_preview=False):
+    def __init__(self, login_or_token=None):
         """Initialize a new GitHub object."""
-        super().__init__(login_or_token, password, base_url, timeout,
-                         client_id, client_secret,
-                         user_agent, per_page,
-                         api_preview)
+        super().__init__(login_or_token=login_or_token,)
         self.token = login_or_token
 
     def clone(self, repository: Repository, destination):
         """Clones a GitHub repository and returns a Git object."""
         environ = {}
-        environ['GIT_ASKPASS'] = 'repository-updater-git-askpass'
-        environ['GIT_USERNAME'] = self.token
-        environ['GIT_PASSWORD'] = ''
+        environ["GIT_ASKPASS"] = "repository-updater-git-askpass"
+        environ["GIT_USERNAME"] = self.token
+        environ["GIT_PASSWORD"] = ""
 
-        repo = Repo.clone_from(repository.clone_url, destination, None,
-                               environ)
+        repo = Repo.clone_from(repository.clone_url, destination, None, environ)
 
         config = repo.config_writer()
-        config.set_value('user', 'email', self.get_user().email)
-        config.set_value('user', 'name', self.get_user().name)
-        config.set_value('commit', 'gpgsign', 'false')
+        config.set_value("user", "email", self.get_user().email)
+        config.set_value("user", "name", self.get_user().name)
+        config.set_value("commit", "gpgsign", "false")
 
         return repo

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # MIT License
 #
@@ -39,23 +38,31 @@ from .repository import Repository
 
 
 @click.command()
-@click.option('--token', hide_input=True, prompt="GitHub access token",
-              help="GitHub access token", metavar='<TOKEN>')
-@click.option('--repository', prompt="Hassio Addons repository to update",
-              help="The Hassio Addons repository to update",
-              metavar="<orgname/reponame>")
-@click.option('--addon', help='Update a single/specific add-on',
-              metavar="<TARGET>")
-@click.option('--force', is_flag=True,
-              help='Force an update of the add-on repository')
+@click.option(
+    "--token",
+    hide_input=True,
+    prompt="GitHub access token",
+    help="GitHub access token",
+    metavar="<TOKEN>",
+)
+@click.option(
+    "--repository",
+    prompt="Hassio Addons repository to update",
+    help="The Hassio Addons repository to update",
+    metavar="<orgname/reponame>",
+)
+@click.option("--addon", help="Update a single/specific add-on", metavar="<TARGET>")
+@click.option("--force", is_flag=True, help="Force an update of the add-on repository")
 @click.version_option(APP_VERSION, prog_name=APP_FULL_NAME)
 def repository_updater(token, repository, addon, force):
     """Community Hass.io Add-ons Repository Updater."""
     click.echo(crayons.blue(APP_FULL_NAME, bold=True))
-    click.echo(crayons.blue('-' * 50, bold=True))
+    click.echo(crayons.blue("-" * 50, bold=True))
     github = GitHub(token)
-    click.echo("Authenticated with GitHub as %s" %
-               crayons.yellow(github.get_user().name, bold=True))
+    click.echo(
+        "Authenticated with GitHub as %s"
+        % crayons.yellow(github.get_user().name, bold=True)
+    )
     repository = Repository(github, repository, addon, force)
     repository.update()
     repository.cleanup()
@@ -70,12 +77,11 @@ def git_askpass():
     intended to be called by Git via GIT_ASKPASS.
     """
     if argv[1] == "Username for 'https://github.com': ":
-        print(environ['GIT_USERNAME'])
+        print(environ["GIT_USERNAME"])
         exit()
 
-    if argv[1] == "Password for 'https://" \
-            "%(GIT_USERNAME)s@github.com': " % environ:
-        print(environ['GIT_PASSWORD'])
+    if argv[1] == "Password for 'https://" "%(GIT_USERNAME)s@github.com': " % environ:
+        print(environ["GIT_PASSWORD"])
         exit()
 
     exit(1)
