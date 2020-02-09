@@ -1,4 +1,4 @@
-# Community Hass.io Add-ons Repository Updater
+# Community Home Assistant Add-ons Repository Updater
 
 [![PyPi Release][pypi-shield]][pypi]
 [![GitHub Activity][commits-shield]][commits]
@@ -15,10 +15,10 @@
 Reads remote add-on repositories, determines versions and generates
 changelogs to update the add-on repository fully automated.
 
-Mainly used by the Community Hass.io add-ons project.
+Mainly used by the Community Home Assistant Add-ons project.
 
 Please note, this program cannot be used with the general documented
-Hass.io add-on repository approach and only works in the setup where
+Home Assistant add-on repository approach and only works in the setup where
 each add-on has its own GitHub repository.
 
 ## Installation
@@ -36,12 +36,12 @@ The Repository Updater is a pretty simple, straightforward CLI tool.
 ```txt
 Usage: repository-updater [OPTIONS]
 
-  Community Hass.io Add-ons Repository Updater.
+  Community Home Assistant Add-ons Repository Updater.
 
 Options:
   --token <TOKEN>                 GitHub access token
   --repository <orgname/reponame>
-                                  The Hassio Addons repository to update
+                                  The Home Assistant Addons repository to update
   --addon <TARGET>                Update a single/specific add-on
   --force                         Force an update of the add-on repository
   --version                       Show the version and exit.
@@ -81,7 +81,7 @@ There are 3 stability channel levels available:
 - **beta**: Beta / test releases
 - **edge**: Latest builds, usually build straight from development
 
-Create a `.hassio-addons.yml` file in the root of the add-ons repository,
+Create a `.addons.yml` file in the root of the add-ons repository,
 which looks like this:
 
 ```yaml
@@ -161,8 +161,8 @@ list contains the following variables:
 ## Examples
 
 It is quite a complex setup to create an example for in this little document.
-Nevertheless, see the [Community Hass.io Addons Repository][repository] for an
-example of `.README.j2` and `.hassio-addons.yml` files.
+Nevertheless, see the [Community Home Assistant Addons Repository][repository]
+for an example of `.README.j2` and `.addons.yml` files.
 
 The community project also uses GitLab for building its add-ons. Each
 add-on runs this tool upon build, ensuring the repositories are always up to
@@ -172,9 +172,9 @@ the whole setup.
 ## Why do this all
 
 Let me start by saying, there is nothing wrong with the documented way of
-setting up a Hass.io add-ons repository. If you are just starting out developing
-add-ons, please use the official documented way. You can always decide to
-change your workflow.
+setting up a Home Assistant add-ons repository. If you are just starting out
+developing add-ons, please use the official documented way. You can always
+decide to change your workflow.
 
 Nevertheless, there are some advantages using the alternative method:
 
@@ -239,11 +239,11 @@ The original setup of this repository is by [Franck Nijhof][frenck].
 For a full list of all authors and contributors,
 check [the contributor's page][contributors].
 
-## We have got some Hass.io add-ons for you
+## We have got some Home Assistant add-ons for you
 
-Want some more functionality to your Hass.io Home Assistant instance?
+Want some more functionality to your Home Assistant instance?
 
-We have created multiple add-ons for Hass.io. For a full list, check out
+We have created multiple add-ons for Home Assistant. For a full list, check out
 our [GitHub Repository][repository].
 
 ## License

@@ -47,7 +47,7 @@ from .github import GitHub
 
 
 class Repository:
-    """Represents an Hass.io add-ons repository."""
+    """Represents an Home Assistant add-ons repository."""
 
     addons: List[Addon]
     github: GitHub
@@ -125,13 +125,20 @@ class Repository:
         """Load repository configuration from remote repository and add-ons."""
         click.echo("Locating repository add-on list...", nl=False)
         try:
-            config = self.github_repository.get_contents(".hassio-addons.yml")
+            config = self.github_repository.get_contents(".addons.yml")
         except UnknownObjectException:
             print(
                 "Seems like the repository does not contain an "
-                ".hassio-addons.yml file"
+                ".addons.yml file, falling back to legacy file."
             )
-            sys.exit(1)
+            try:
+                config = self.github_repository.get_contents(".hassio-addons.yml")
+            except UnknownObjectException:
+                print(
+                    "Seems like the repository does not contain an "
+                    ".hassio-addons.yml file either."
+                )
+                sys.exit(1)
 
         config = yaml.safe_load(config.decoded_content)
         click.echo(crayons.green("Loaded!"))

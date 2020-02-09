@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 """
-Hass.io add-ons repository updater setup
+Home Assistant add-ons repository updater setup
 """
 from setuptools import setup, find_packages
 
@@ -42,7 +42,7 @@ setup(
     url=__url__,
     download_url=__download__,
     keywords=[
-        'hassio', 'hass.io', 'addons', 'repository', 'home assistant',
+        'addons', 'repository', 'home assistant',
         'home-assistant', 'add-ons', 'frenck'
     ],
     platforms='any',

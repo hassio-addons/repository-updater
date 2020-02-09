@@ -24,7 +24,7 @@
 """
 Add-on Module.
 
-Represents / handles all Hass.io specific logic
+Represents / handles all Home Assistant add-on specific logic
 """
 import json
 import os
@@ -47,7 +47,7 @@ from .dockerhub import DockerHub
 
 
 class Addon:
-    """Object representing an Hass.io add-on."""
+    """Object representing an Home Assistant add-on."""
 
     repository_target: str
     addon_target: str
@@ -79,7 +79,7 @@ class Addon:
         channel: str,
         updating: bool,
     ):
-        """Initialize a new Hass.io add-on object."""
+        """Initialize a new Home Assistant add-on object."""
         self.repository_target = repository_target
         self.addon_target = addon_target
         self.image = image

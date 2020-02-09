@@ -47,17 +47,17 @@ from .repository import Repository
 )
 @click.option(
     "--repository",
-    prompt="Hassio Addons repository to update",
-    help="The Hassio Addons repository to update",
+    prompt="Home Assistant Addons repository to update",
+    help="The Home Assistant Addons repository to update",
     metavar="<orgname/reponame>",
 )
 @click.option("--addon", help="Update a single/specific add-on", metavar="<TARGET>")
 @click.option("--force", is_flag=True, help="Force an update of the add-on repository")
 @click.version_option(APP_VERSION, prog_name=APP_FULL_NAME)
 def repository_updater(token, repository, addon, force):
-    """Community Hass.io Add-ons Repository Updater."""
+    """Community Home Assistant Add-ons Repository Updater."""
     click.echo(crayons.blue(APP_FULL_NAME, bold=True))
-    click.echo(crayons.blue("-" * 50, bold=True))
+    click.echo(crayons.blue("-" * 51, bold=True))
     github = GitHub(token)
     click.echo(
         "Authenticated with GitHub as %s"
