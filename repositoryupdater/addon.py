@@ -131,6 +131,7 @@ class Addon:
         self.generate_addon_config()
         self.update_static_files()
         self.generate_readme()
+        self.generate_docs()
         self.generate_addon_changelog()
 
     def __load_current_info(self):
@@ -297,6 +298,7 @@ class Addon:
         self.update_static_file("logo.png")
         self.update_static_file("icon.png")
         self.update_static_file("README.md")
+        self.update_static_file("DOCS.md")
 
     def update_static_file(self, file):
         """Download latest static file from add-on repository."""
@@ -373,6 +375,40 @@ class Addon:
 
         click.echo(crayons.green("Done"))
 
+    def generate_docs(self):
+        """Re-generate the add-on readme based on a template."""
+        click.echo("Re-generating add-on DOCS.md file...", nl=False)
+
+        addon_file = os.path.join(self.addon_target, ".DOCS.j2")
+        local_file = os.path.join(
+            self.repository.working_dir, self.repository_target, "DOCS.md"
+        )
+
+        try:
+            remote_file = self.addon_repository.get_contents(
+                addon_file, self.current_commit.sha
+            )
+        except UnknownObjectException:
+            click.echo(crayons.blue("Skipping"))
+            return
+
+        data = self.get_template_data()
+
+        jinja = Environment(
+            loader=BaseLoader(),
+            trim_blocks=True,
+            extensions=["jinja2.ext.loopcontrols"],
+        )
+
+        with open(local_file, "w") as outfile:
+            outfile.write(
+                jinja.from_string(remote_file.decoded_content.decode("utf8")).render(
+                    **data
+                )
+            )
+
+        click.echo(crayons.green("Done"))
+        
     def get_template_data(self):
         """Return a dictionary with add-on information."""
         data = {}
