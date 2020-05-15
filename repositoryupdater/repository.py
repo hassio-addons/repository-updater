@@ -143,7 +143,7 @@ class Repository:
         config = yaml.safe_load(config.decoded_content)
         click.echo(crayons.green("Loaded!"))
 
-        if not config["channel"] in CHANNELS:
+        if config["channel"] not in CHANNELS:
             click.echo(
                 crayons.red(
                     'Channel "%s" is not a valid channel identifier' % config["channel"]
