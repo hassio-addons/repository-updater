@@ -297,6 +297,7 @@ class Addon:
         self.update_static_file("logo.png")
         self.update_static_file("icon.png")
         self.update_static_file("README.md")
+        self.update_static_file("DOCS.md")
 
     def update_static_file(self, file):
         """Download latest static file from add-on repository."""
