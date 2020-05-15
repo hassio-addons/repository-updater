@@ -32,13 +32,16 @@ import sys
 import urllib.request
 
 import click
+import crayons
+import emoji
+import semver
 from dateutil.parser import parse
 from git import Repo
 from github.Commit import Commit
-from github.GitRelease import GitRelease
 from github.GithubException import UnknownObjectException
+from github.GitRelease import GitRelease
 from github.Repository import Repository
-import emoji
+from jinja2 import BaseLoader, Environment
 
 from .const import CHANNEL_BETA, CHANNEL_EDGE
 from .dockerhub import DockerHub

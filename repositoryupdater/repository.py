@@ -34,12 +34,12 @@ import tempfile
 from typing import List
 
 import click
+import crayons
+import yaml
 from git import Repo
 from github.GithubException import UnknownObjectException
 from github.Repository import Repository as GitHubRepository
 from jinja2 import Environment, FileSystemLoader
-import yaml
-import crayons
 
 from .addon import Addon
 from .const import CHANNELS
