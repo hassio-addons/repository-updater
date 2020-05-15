@@ -3,10 +3,10 @@ FROM python:3.8-alpine3.11
 # Setup base
 RUN \
     apk add --no-cache \
-        git=2.24.1-r0 \
+        git=2.24.3-r0 \
     \
     && pip3 install \
-        repository-updater==0.4.0
+        repository-updater==0.5.0
 
 # Entrypoint
 ENTRYPOINT ["repository-updater"]
