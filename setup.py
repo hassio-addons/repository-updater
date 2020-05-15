@@ -58,14 +58,14 @@ setup(
     ],
     packages=find_packages(),
     install_requires=[
-        'click==7.0',
+        'click==7.1.2',
         'crayons==0.3.0',
-        'GitPython==3.0.5',
-        'Jinja2==2.10.3',
-        'PyGithub==1.45',
+        'GitPython==3.1.2',
+        'Jinja2==2.11.2',
+        'PyGithub==1.51',
         'python-dateutil==2.8.1',
-        'PyYAML==5.2',
-        'semver==2.9.0',
+        'PyYAML==5.3.1',
+        'semver==2.10.1',
     ],
     entry_points='''
         [console_scripts]
