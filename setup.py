@@ -60,6 +60,7 @@ setup(
     install_requires=[
         'click==7.1.2',
         'crayons==0.3.0',
+        'emoji==0.5.4',
         'GitPython==3.1.2',
         'Jinja2==2.11.2',
         'PyGithub==1.51',

@@ -38,9 +38,7 @@ from github.Commit import Commit
 from github.GitRelease import GitRelease
 from github.GithubException import UnknownObjectException
 from github.Repository import Repository
-from jinja2 import Environment, BaseLoader
-import crayons
-import semver
+import emoji
 
 from .const import CHANNEL_BETA, CHANNEL_EDGE
 from .dockerhub import DockerHub
@@ -281,6 +279,8 @@ class Addon:
                 changelog += "- %s \n" % (commit.commit.message)
         else:
             changelog += "- %s\n" % (self.current_commit.commit.message)
+
+        changelog = emoji.emojize(changelog, use_aliases=True)
 
         with open(
             os.path.join(
