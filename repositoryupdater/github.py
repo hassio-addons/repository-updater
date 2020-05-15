@@ -31,8 +31,7 @@ functionality.
 from git import Repo
 from github import Github as PyGitHub
 from github import Repository
-from github.MainClass import (DEFAULT_BASE_URL, DEFAULT_PER_PAGE,
-                              DEFAULT_TIMEOUT)
+from github.MainClass import DEFAULT_BASE_URL, DEFAULT_PER_PAGE, DEFAULT_TIMEOUT
 
 
 class GitHub(PyGitHub):
@@ -48,9 +47,9 @@ class GitHub(PyGitHub):
     def clone(self, repository: Repository, destination):
         """Clones a GitHub repository and returns a Git object."""
         environ = {
-            'GIT_ASKPASS': 'repository-updater-git-askpass',
-            'GIT_USERNAME': self.token,
-            'GIT_PASSWORD': '',
+            "GIT_ASKPASS": "repository-updater-git-askpass",
+            "GIT_USERNAME": self.token,
+            "GIT_PASSWORD": "",
         }
 
         repo = Repo.clone_from(repository.clone_url, destination, None, environ)
