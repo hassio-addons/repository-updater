@@ -38,7 +38,7 @@ import semver
 from dateutil.parser import parse
 from git import Repo
 from github.Commit import Commit
-from github.GithubException import UnknownObjectException
+from github.GithubException import GithubException, UnknownObjectException
 from github.GitRelease import GitRelease
 from github.Repository import Repository
 from jinja2 import BaseLoader, Environment
@@ -166,7 +166,14 @@ class Addon:
                 ref = self.addon_repository.get_git_ref("tags/v" + self.current_version)
             self.current_commit = self.addon_repository.get_commit(ref.object.sha)
         else:
-            self.current_commit = self.addon_repository.get_commit(self.current_version)
+            try:
+                self.current_commit = self.addon_repository.get_commit(
+                    f"v{self.current_version}"
+                )
+            except GithubException:
+                self.current_commit = self.addon_repository.get_commit(
+                    self.current_version
+                )
 
         click.echo(
             "Current version: %s (%s)"
