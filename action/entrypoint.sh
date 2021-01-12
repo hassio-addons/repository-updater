@@ -3,8 +3,8 @@ declare -a options
 
 options+=(--token "${INPUT_TOKEN:-}")
 
-if [[ -n "${INPUT_ADDON:-}" ]]; then
-  options+=(--repository "${INPUT_ADDON}")
+if [[ -n "${INPUT_REPOSITORY:-}" ]]; then
+  options+=(--repository "${INPUT_REPOSITORY}")
 else
   options+=(--repository "${GITHUB_REPOSITORY}")
 fi
