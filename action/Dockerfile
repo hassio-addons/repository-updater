@@ -7,6 +7,6 @@ RUN \
     && pip3 install \
         repository-updater==0.6.0
 
-COPY lint.py /lint.py
+COPY entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT ["python3", "/lint.py"]
+ENTRYPOINT ["/entrypoint.sh"]
