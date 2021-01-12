@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2018-2020 Franck Nijhof
+# Copyright (c) 2018-2021 Franck Nijhof
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@ APP_DESCRIPTION = __doc__
 
 __author__ = "Franck Nijhof"
 __email__ = "frenck@addons.community"
-__copyright__ = "Copyright 2018-2020, Franck Nijhof"
+__copyright__ = "Copyright 2018-2021, Franck Nijhof"
 __license__ = "MIT"
 __url__ = "https://github.com/hassio-addons/repository-updater"
 __download__ = (
