@@ -44,7 +44,6 @@ from github.Repository import Repository
 from jinja2 import BaseLoader, Environment
 
 from .const import CHANNEL_BETA, CHANNEL_EDGE
-from .dockerhub import DockerHub
 
 
 class Addon:
@@ -119,14 +118,6 @@ class Addon:
         self.current_version = self.latest_version
         self.current_release = self.latest_release
         self.current_commit = self.latest_commit
-
-        if not self.is_live():
-            click.echo(
-                crayons.red(
-                    "Not all Docker images are available on DockerHub aborting..."
-                )
-            )
-            sys.exit(1)
 
         self.ensure_addon_dir()
         self.generate_addon_config()
@@ -332,23 +323,6 @@ class Addon:
             click.echo(crayons.yellow("Removed"))
         else:
             click.echo(crayons.blue("Skipping"))
-
-    def is_live(self):
-        """Check if the latest add-on version is actually on Docker Hub."""
-        click.echo(
-            "Checking if all Docker images are available on Docker Hub...", nl=False
-        )
-        for arch in self.archs:
-            image = self.image.replace("{arch}", arch)
-            if not DockerHub.image_exists_on_dockerhub(
-                self.image.replace("{arch}", arch), self.current_version
-            ):
-                click.echo(
-                    crayons.red("Missing: %s:%s" % (image, self.current_version))
-                )
-                return False
-        click.echo(crayons.green("OK!"))
-        return True
 
     def generate_readme(self):
         """Re-generate the add-on readme based on a template."""
