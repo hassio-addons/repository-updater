@@ -2,7 +2,8 @@ FROM python:3.9-alpine
 
 RUN \
     apk add --no-cache \
-        git=2.26.2-r0 \
+        bash \
+        git \
     \
     && pip3 install \
         repository-updater==0.6.0
