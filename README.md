@@ -93,7 +93,7 @@ jobs:
           token: ${{ secrets.UPDATER_TOKEN }}
 ```
 
-One that workflow is in place, from an add-on repository, you can trigger
+Once that workflow is in place, from an add-on repository, you can trigger
 the above workflow to run. This can be done by dispatching a signal to
 the updater workflow:
 
