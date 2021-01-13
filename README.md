@@ -134,14 +134,14 @@ addons:
     repository: hassio-addons/addon-example
     target: example
     image: hassioaddons/example-{arch}
-  homebridge:
-    repository: hassio-addons/addon-homebridge
+  another:
+    repository: hassio-addons/addon-another
     target: homebridge
-    image: hassioaddons/homebridge-{arch}
-  pihole:
-    repository: hassio-addons/addon-pi-hole
-    target: pi-hole
-    image: hassioaddons/pi-hole-{arch}
+    image: ghcr.io/hassio-addons/test-{arch}
+  demo:
+    repository: hassio-addons/addon-demo
+    target: src
+    image: ghcr.io/hassio-addons/demo/{arch}
 ```
 
 The target in the add-ons repository is specified as the key for each add-on,
@@ -149,16 +149,17 @@ this will be the directory name inside the add-ons repository as well. This is
 different from the `target` key, in a way that that key specified the add-on
 target directory inside the git repository of the add-on itself.
 
-In the above example, `pihole` will be the name of the add-on directory
-inside the add-ons repository, while `pi-hole` is the directory in the add-on
+In the above example, `demo` will be the name of the add-on directory
+inside the add-ons repository, while `src` is the directory in the add-on
 git repo that contains the actual add-on.
 
 `repository` specified the location of the add-on on GitHub. This must be
 in `organization/repository` or `username/repository` format.
 
 Finally, the `image` key defines the Docker container images on Docker Hub
-for this add-on. `{arch}` can be used as a placeholder for the architecture and
-is automatically replaced internally by the Repository Updater.
+or the GitHub Container Registry for this add-on. `{arch}` can be used as a
+placeholder for the architecture and is automatically replaced internally by
+the Repository Updater.
 
 ## Add-ons Repository README template
 
@@ -241,8 +242,7 @@ Nevertheless, there are some advantages using the alternative method:
 ## Changelog & Releases
 
 This repository keeps a change log using [GitHub's releases][releases]
-functionality. The format of the log is based on
-[Keep a Changelog][keepchangelog].
+functionality.
 
 Releases are based on [Semantic Versioning][semver], and use the format
 of ``MAJOR.MINOR.PATCH``. In a nutshell, the version will be incremented
@@ -322,7 +322,6 @@ SOFTWARE.
 [forum]: https://community.home-assistant.io?u=frenck
 [frenck]: https://github.com/frenck
 [issue]: https://github.com/hassio-addons/repository-updater/issues
-[keepchangelog]: http://keepachangelog.com/en/1.0.0/
 [license-shield]: https://img.shields.io/github/license/hassio-addons/repository-updater.svg
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2021.svg
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-experimental-yellow.svg
