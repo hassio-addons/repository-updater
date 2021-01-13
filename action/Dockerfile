@@ -6,7 +6,7 @@ RUN \
         git \
     \
     && pip3 install \
-        repository-updater==0.6.0
+        repository-updater==1.0.0
 
 COPY entrypoint.sh /entrypoint.sh
 
