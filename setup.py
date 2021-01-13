@@ -2,11 +2,6 @@
 from setuptools import setup, find_packages
 
 from repositoryupdater import (
-    __author__,
-    __email__,
-    __license__,
-    __url__,
-    __download__,
     APP_NAME,
     APP_VERSION,
     APP_DESCRIPTION,
@@ -15,13 +10,12 @@ from repositoryupdater import (
 setup(
     name=APP_NAME,
     version=APP_VERSION,
-    author=__author__,
-    author_email=__email__,
+    author="Franck Nijhof",
+    author_email="frenck@addons.community",
     description=APP_DESCRIPTION.split("\n")[0],
     long_description=APP_DESCRIPTION,
-    license=__license__,
-    url=__url__,
-    download_url=__download__,
+    license="MIT",
+    url="https://github.com/hassio-addons/repository-updater",
     keywords=[
         "addons",
         "repository",
