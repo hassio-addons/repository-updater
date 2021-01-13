@@ -68,6 +68,49 @@ For example, this shows the current version of the tool:
 docker run -it --rm hassioaddons/repository-updater:latest --version
 ```
 
+## Using a GitHub Action
+
+The Repository Updater is also available as a GitHub Action.
+
+```yaml
+---
+name: Repository Update
+
+on:
+  repository_dispatch:
+    types: ["update"]
+
+jobs:
+  whatever:
+    name: Running updater for ${{ github.event.client_payload.addon }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚀 Run Repository Updater
+        uses: hassio-addons/repository-updater@master
+        with:
+          addon: ${{ github.event.client_payload.addon }}
+          repository: ${{ github.repository }}
+          token: ${{ secrets.UPDATER_TOKEN }}
+```
+
+One that workflow is in place, from an add-on repository, you can trigger
+the above workflow to run. This can be done by dispatching a signal to
+the updater workflow:
+
+```yaml
+publish:
+  name: 📢 Publish Add-on
+  runs-on: ubuntu-latest
+  steps:
+    - name: 🚀 Dispatch Repository Updater update signal
+      uses: peter-evans/repository-dispatch@v1
+      with:
+        token: ${{ secrets.DISPATCH_TOKEN }}
+        repository: hassio-addons/repository
+        event-type: update
+        client-payload: '{"addon": "my-addon"}'
+```
+
 ## Add-ons Repository Configuration
 
 In order for the Repository Updater to do its job, we need feed it some
