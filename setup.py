@@ -42,7 +42,7 @@ setup(
         "crayons==0.4.0",
         "emoji==0.6.0",
         "GitPython==3.1.12",
-        "Jinja2==2.11.2",
+        "Jinja2==2.11.3",
         "PyGithub==1.54.1",
         "python-dateutil==2.8.1",
         "PyYAML==5.3.1",
