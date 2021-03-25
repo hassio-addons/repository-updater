@@ -45,7 +45,7 @@ setup(
         "Jinja2==2.11.3",
         "PyGithub==1.54.1",
         "python-dateutil==2.8.1",
-        "PyYAML==5.3.1",
+        "PyYAML==5.4",
         "semver==2.13.0",
     ],
     entry_points="""
