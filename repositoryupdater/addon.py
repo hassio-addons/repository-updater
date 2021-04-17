@@ -211,9 +211,13 @@ class Addon:
     def ensure_addon_dir(self):
         """Ensure the add-on target directory exists."""
         addon_path = os.path.join(self.repository.working_dir, self.repository_target)
+        addon_translations_path = os.path.join(addon_path, "translations")
 
         if not os.path.exists(addon_path):
             os.mkdir(addon_path)
+
+        if not os.path.exists(addon_translations_path):
+            os.mkdir(addon_translations_path)
 
     def generate_addon_config(self):
         """Generate add-on configuration file."""
@@ -277,6 +281,7 @@ class Addon:
         self.update_static_file("README.md")
         self.update_static_file("DOCS.md")
         self.update_static_file("apparmor.txt")
+        self.update_static_file("translations/en.yaml")
 
     def update_static_file(self, file):
         """Download latest static file from add-on repository."""
