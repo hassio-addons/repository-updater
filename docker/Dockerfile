@@ -9,7 +9,7 @@ RUN \
         --no-cache-dir \
         --prefer-binary \
         --find-links "https://wheels.home-assistant.io/alpine-3.13/${BUILD_ARCH}/" \
-        repository-updater==1.0.2
+        repository-updater==1.1.0
 
 # Entrypoint
 ENTRYPOINT ["repository-updater"]
