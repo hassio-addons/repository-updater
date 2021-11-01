@@ -33,7 +33,8 @@ class GitHub(PyGitHub):
         repo = Repo.clone_from(repository.clone_url, destination, None, environ)
 
         config = repo.config_writer()
-        config.set_value("user", "email", self.get_user().email)
+        if self.get_user().email:
+            config.set_value("user", "email", self.get_user().email)
         config.set_value("user", "name", self.get_user().name)
         config.set_value("commit", "gpgsign", "false")
 
