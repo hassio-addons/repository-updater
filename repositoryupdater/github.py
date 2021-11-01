@@ -8,7 +8,6 @@ functionality.
 from git import Repo
 from github import Github as PyGitHub
 from github import Repository
-from github.MainClass import DEFAULT_BASE_URL, DEFAULT_PER_PAGE, DEFAULT_TIMEOUT
 
 
 class GitHub(PyGitHub):
@@ -18,7 +17,9 @@ class GitHub(PyGitHub):
 
     def __init__(self, login_or_token=None):
         """Initialize a new GitHub object."""
-        super().__init__(login_or_token=login_or_token,)
+        super().__init__(
+            login_or_token=login_or_token,
+        )
         self.token = login_or_token
 
     def clone(self, repository: Repository, destination):

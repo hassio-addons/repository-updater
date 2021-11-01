@@ -1,15 +1,15 @@
-FROM python:3.9-alpine3.13
+FROM python:3.10-alpine3.14
 
 # Setup base
 RUN \
     apk add --no-cache \
-        git=2.30.2-r0 \
+        git=2.32.0-r0 \
     \
     && pip3 install \
         --no-cache-dir \
         --prefer-binary \
-        --find-links "https://wheels.home-assistant.io/alpine-3.13/${BUILD_ARCH}/" \
-        repository-updater==1.1.0
+        --find-links "https://wheels.home-assistant.io/alpine-3.14/${BUILD_ARCH}/" \
+        repository-updater==1.2.0
 
 # Entrypoint
 ENTRYPOINT ["repository-updater"]

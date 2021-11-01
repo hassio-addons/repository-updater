@@ -1,11 +1,7 @@
 "Home Assistant add-ons repository updater setup."
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-from repositoryupdater import (
-    APP_NAME,
-    APP_VERSION,
-    APP_DESCRIPTION,
-)
+from repositoryupdater import APP_DESCRIPTION, APP_NAME, APP_VERSION
 
 setup(
     name=APP_NAME,
@@ -32,20 +28,21 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3",
         "Topic :: Software Development :: Build Tools",
         "Topic :: Utilities",
     ],
     packages=find_packages(),
     install_requires=[
-        "click==7.1.2",
+        "click==8.0.1",
         "crayons==0.4.0",
-        "emoji==0.6.0",
-        "GitPython==3.1.12",
-        "Jinja2==2.11.3",
-        "PyGithub==1.54.1",
-        "python-dateutil==2.8.1",
-        "PyYAML==5.4",
+        "emoji==1.6.0",
+        "GitPython==3.1.24",
+        "Jinja2==3.0.2",
+        "PyGithub==1.55",
+        "python-dateutil==2.8.2",
+        "PyYAML==6.0",
         "semver==2.13.0",
     ],
     entry_points="""
