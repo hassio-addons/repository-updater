@@ -140,6 +140,7 @@ class Repository:
             click.echo(crayons.cyan(f"Loading add-on {target}"))
             self.addons.append(
                 Addon(
+                    self.github,
                     self.git_repo,
                     target,
                     addon_config["image"],
@@ -186,7 +187,9 @@ class Repository:
             extensions=["jinja2.ext.loopcontrols"],
         )
 
-        with open(os.path.join(self.git_repo.working_dir, "README.md"), "w") as outfile:
+        with open(
+            os.path.join(self.git_repo.working_dir, "README.md"), "w", encoding="utf8"
+        ) as outfile:
             outfile.write(
                 jinja.get_template(".README.j2").render(
                     addons=addon_data,

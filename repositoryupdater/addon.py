@@ -6,19 +6,22 @@ Represents / handles all Home Assistant add-on specific logic
 import json
 import os
 import sys
-import urllib.request
+import tempfile
+from shutil import copyfile, copytree, rmtree
 
 import click
 import crayons
 import emoji
 import semver
-from dateutil.parser import parse
+import yaml
 from git import Repo
 from github.Commit import Commit
 from github.GithubException import GithubException, UnknownObjectException
 from github.GitRelease import GitRelease
 from github.Repository import Repository
 from jinja2 import BaseLoader, Environment
+
+from repositoryupdater.github import GitHub
 
 from .const import CHANNEL_BETA, CHANNEL_EDGE
 
@@ -45,9 +48,12 @@ class Addon:
     slug: str
     url: str
     channel: str
+    github: GitHub
+    git_repo: Repo
 
     def __init__(
         self,
+        github: GitHub,
         repository: Repo,
         repository_target: str,
         image: str,
@@ -57,6 +63,7 @@ class Addon:
         updating: bool,
     ):
         """Initialize a new Home Assistant add-on object."""
+        self.github = github
         self.repository_target = repository_target
         self.addon_target = addon_target
         self.image = image
@@ -84,6 +91,15 @@ class Addon:
             else:
                 click.echo(crayons.green("This add-on is up to date."))
 
+    def clone_repository(self):
+        """Clone the add-on source to a local working directory."""
+        click.echo("Cloning add-on git repository...", nl=False)
+        self.git_repo = self.github.clone(
+            self.addon_repository, tempfile.mkdtemp(prefix=self.addon_target)
+        )
+        self.git_repo.git.checkout(self.current_commit.sha)
+        click.echo(crayons.green("Cloned!"))
+
     def update(self):
         """Update this add-on inside the given add-on repository."""
         if not self.updating:
@@ -96,6 +112,7 @@ class Addon:
         self.current_release = self.latest_release
         self.current_commit = self.latest_commit
 
+        self.clone_repository()
         self.ensure_addon_dir()
         self.generate_addon_config()
         self.update_static_files()
@@ -112,7 +129,7 @@ class Addon:
             click.echo("Current version: %s" % crayons.yellow("Not available"))
             return False
 
-        current_config = json.load(open(current_config_file))
+        current_config = json.load(open(current_config_file, encoding="utf8"))
         self.current_version = current_config["version"]
         self.name = current_config["name"]
         self.description = current_config["description"]
@@ -222,27 +239,60 @@ class Addon:
     def generate_addon_config(self):
         """Generate add-on configuration file."""
         click.echo("Generating add-on configuration...", nl=False)
-        try:
-            config = self.addon_repository.get_contents(
-                os.path.join(self.addon_target, "config.json"), self.current_commit.sha
-            )
-        except UnknownObjectException:
+
+        config_files = ("config.json", "config.yaml", "config.yml")
+        config_file = None
+        for config_file in config_files:
+            if os.path.exists(
+                os.path.join(self.git_repo.working_dir, self.addon_target, config_file)
+            ):
+                break
+            config_file = None
+
+        if config_file is None:
             click.echo(crayons.red("Failed!"))
             sys.exit(1)
 
-        config = json.loads(config.decoded_content)
+        with open(
+            os.path.join(self.git_repo.working_dir, self.addon_target, config_file),
+            encoding="utf8",
+        ) as f:
+            config = (
+                json.load(f) if config_file.endswith(".json") else yaml.safe_load(f)
+            )
+
         config["version"] = self.current_version
         config["image"] = self.image
 
+        for old_config_file in config_files:
+            try:
+                os.unlink(
+                    os.path.join(
+                        self.repository.working_dir,
+                        self.repository_target,
+                        old_config_file,
+                    )
+                )
+            except:
+                pass
+
         with open(
             os.path.join(
-                self.repository.working_dir, self.repository_target, "config.json"
+                self.repository.working_dir, self.repository_target, config_file
             ),
             "w",
+            encoding="utf8",
         ) as outfile:
-            json.dump(
-                config, outfile, ensure_ascii=False, indent=2, separators=(",", ": ")
-            )
+            if config_file.endswith(".json"):
+                json.dump(
+                    config,
+                    outfile,
+                    ensure_ascii=False,
+                    indent=2,
+                    separators=(",", ": "),
+                )
+            else:
+                yaml.dump(config, outfile, default_flow_style=False)
 
         click.echo(crayons.green("Done"))
 
@@ -269,6 +319,7 @@ class Addon:
                 self.repository.working_dir, self.repository_target, "CHANGELOG.md"
             ),
             "w",
+            encoding="utf8",
         ) as outfile:
             outfile.write(changelog)
 
@@ -276,33 +327,30 @@ class Addon:
 
     def update_static_files(self):
         """Update the static add-on files within the repository."""
-        self.update_static_file("logo.png")
-        self.update_static_file("icon.png")
-        self.update_static_file("README.md")
-        self.update_static_file("DOCS.md")
-        self.update_static_file("apparmor.txt")
-        self.update_static_file("translations/en.yaml")
+        self.update_static("logo.png")
+        self.update_static("icon.png")
+        self.update_static("README.md")
+        self.update_static("DOCS.md")
+        self.update_static("apparmor.txt")
+        self.update_static("translations")
 
-    def update_static_file(self, file):
-        """Download latest static file from add-on repository."""
-        click.echo(f"Syncing add-on static file {file}...", nl=False)
-        addon_file = os.path.join(self.addon_target, file)
+    def update_static(self, file):
+        """Download latest static file/directory from add-on repository."""
+        click.echo(f"Syncing add-on static {file}...", nl=False)
         local_file = os.path.join(
             self.repository.working_dir, self.repository_target, file
         )
-        remote_file = False
-        try:
-            remote_file = self.addon_repository.get_contents(
-                addon_file, self.current_commit.sha
-            )
-        except UnknownObjectException:
-            pass
+        remote_file = os.path.join(self.git_repo.working_dir, self.addon_target, file)
 
-        if remote_file:
-            urllib.request.urlretrieve(remote_file.download_url, local_file)
+        if os.path.exists(remote_file) and os.path.isfile(remote_file):
+            copyfile(remote_file, local_file)
+            click.echo(crayons.green("Done"))
+        elif os.path.exists(remote_file) and os.path.isdir(remote_file):
+            rmtree(local_file)
+            copytree(remote_file, local_file)
             click.echo(crayons.green("Done"))
         elif os.path.isfile(local_file):
-            os.remove(os.path.join(local_file))
+            os.remove(local_file)
             click.echo(crayons.yellow("Removed"))
         else:
             click.echo(crayons.blue("Skipping"))
@@ -311,18 +359,16 @@ class Addon:
         """Re-generate the add-on readme based on a template."""
         click.echo("Re-generating add-on README.md file...", nl=False)
 
-        addon_file = os.path.join(self.addon_target, ".README.j2")
+        addon_file = os.path.join(
+            self.git_repo.working_dir, self.addon_target, ".README.j2"
+        )
+        if not os.path.exists(addon_file):
+            click.echo(crayons.blue("Skipping"))
+            return
+
         local_file = os.path.join(
             self.repository.working_dir, self.repository_target, "README.md"
         )
-
-        try:
-            remote_file = self.addon_repository.get_contents(
-                addon_file, self.current_commit.sha
-            )
-        except UnknownObjectException:
-            click.echo(crayons.blue("Skipping"))
-            return
 
         data = self.get_template_data()
 
@@ -332,9 +378,9 @@ class Addon:
             extensions=["jinja2.ext.loopcontrols"],
         )
 
-        with open(local_file, "w") as outfile:
+        with open(local_file, "w", encoding="utf8") as outfile:
             outfile.write(
-                jinja.from_string(remote_file.decoded_content.decode("utf8")).render(
+                jinja.from_string(open(addon_file, encoding="utf8").read()).render(
                     **data
                 )
             )

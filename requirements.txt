@@ -1,9 +1,9 @@
-click==7.1.2
+click==8.0.1
 crayons==0.4.0
-emoji==0.6.0
-GitPython==3.1.12
-Jinja2==2.11.3
-PyGithub==1.54.1
-python-dateutil==2.8.1
-PyYAML==5.4
+emoji==1.6.0
+GitPython==3.1.24
+Jinja2==3.0.2
+PyGithub==1.55
+python-dateutil==2.8.2
+PyYAML==6.0
 semver==2.13.0

@@ -3,6 +3,7 @@ CLI Module.
 
 Handles CLI for the Repository Updater
 """
+import sys
 from os import environ
 from sys import argv
 
@@ -55,10 +56,10 @@ def git_askpass():
     """
     if argv[1] == "Username for 'https://github.com': ":
         print(environ["GIT_USERNAME"])
-        exit()
+        sys.exit()
 
     if argv[1] == "Password for 'https://" "%(GIT_USERNAME)s@github.com': " % environ:
         print(environ["GIT_PASSWORD"])
-        exit()
+        sys.exit()
 
-    exit(1)
+    sys.exit(1)
