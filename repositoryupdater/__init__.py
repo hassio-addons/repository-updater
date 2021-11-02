@@ -12,7 +12,7 @@ Home Assistant add-on repository approach.
 
 APP_NAME = "repository-updater"
 APP_FULL_NAME = "Community Home Assistant Add-ons Repository Updater"
-APP_VERSION = "1.2.1"
+APP_VERSION = "1.2.2"
 APP_DESCRIPTION = __doc__
 
 __version__ = APP_VERSION

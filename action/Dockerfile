@@ -10,7 +10,7 @@ RUN \
         --no-cache-dir \
         --prefer-binary \
         --find-links "https://wheels.home-assistant.io/alpine-3.14/amd64/" \
-        repository-updater==1.2.1
+        repository-updater==1.2.2
 
 COPY entrypoint.sh /entrypoint.sh
 
