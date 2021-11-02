@@ -38,6 +38,7 @@ class Addon:
     current_version: str
     current_commit: Commit
     current_release: GitRelease
+    existing_config_filename: str | None = None
     latest_version: str
     latest_release: GitRelease
     latest_is_release: bool
@@ -121,15 +122,35 @@ class Addon:
 
     def __load_current_info(self):
         """Load current add-on version information and current config."""
-        current_config_file = os.path.join(
-            self.repository.working_dir, self.repository_target, "config.json"
-        )
+        config_files = ("config.json", "config.yaml", "config.yml")
+        for config_file in config_files:
+            if os.path.exists(
+                os.path.join(
+                    self.repository.working_dir, self.repository_target, config_file
+                )
+            ):
+                self.existing_config_filename = config_file
+                break
 
-        if not os.path.isfile(current_config_file):
+        if self.existing_config_filename is None:
             click.echo("Current version: %s" % crayons.yellow("Not available"))
             return False
 
-        current_config = json.load(open(current_config_file, encoding="utf8"))
+        with open(
+            os.path.join(
+                self.repository.working_dir,
+                self.repository_target,
+                self.existing_config_filename,
+            ),
+            "r",
+            encoding="utf8",
+        ) as f:
+            current_config = (
+                json.load(f)
+                if self.existing_config_filename.endswith(".json")
+                else yaml.safe_load(f)
+            )
+
         self.current_version = current_config["version"]
         self.name = current_config["name"]
         self.description = current_config["description"]
@@ -191,19 +212,25 @@ class Addon:
                 self.latest_commit = last_commit
                 self.latest_is_release = False
 
-        try:
-            latest_config_file = self.addon_repository.get_contents(
-                os.path.join(self.addon_target, "config.json"), self.latest_commit.sha
+        config_files = ["config.json", "config.yaml", "config.yml"]
+        # Ensure existing filename is at the start of the list
+        if self.existing_config_filename is not None:
+            config_files.insert(
+                0, config_files.pop(config_files.index(self.existing_config_filename))
             )
-            latest_config = json.loads(latest_config_file.decoded_content)
-            self.name = latest_config["name"]
-            self.description = latest_config["description"]
-            self.slug = latest_config["slug"]
-            self.url = latest_config["url"]
-            if "arch" in latest_config:
-                self.archs = latest_config["arch"]
 
-        except UnknownObjectException:
+        latest_config_file = None
+        config_file = None
+        for config_file in config_files:
+            try:
+                latest_config_file = self.addon_repository.get_contents(
+                    os.path.join(self.addon_target, config_file), self.latest_commit.sha
+                )
+                break
+            except UnknownObjectException:
+                pass
+
+        if config_file is None or latest_config_file is None:
             click.echo(
                 crayons.red(
                     "An error occurred while loading the remote add-on "
@@ -211,6 +238,19 @@ class Addon:
                 )
             )
             sys.exit(1)
+
+        latest_config = (
+            json.loads(latest_config_file.decoded_content)
+            if config_file.endswith(".json")
+            else yaml.safe_load(latest_config_file.decoded_content)
+        )
+
+        self.name = latest_config["name"]
+        self.description = latest_config["description"]
+        self.slug = latest_config["slug"]
+        self.url = latest_config["url"]
+        if "arch" in latest_config:
+            self.archs = latest_config["arch"]
 
         click.echo(
             "Latest version: %s (%s)"
