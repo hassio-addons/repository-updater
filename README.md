@@ -323,7 +323,7 @@ SOFTWARE.
 [frenck]: https://github.com/frenck
 [issue]: https://github.com/hassio-addons/repository-updater/issues
 [license-shield]: https://img.shields.io/github/license/hassio-addons/repository-updater.svg
-[maintenance-shield]: https://img.shields.io/maintenance/yes/2021.svg
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2022.svg
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-production%20ready-brightgreen.svg
 [pypi-shield]: https://img.shields.io/pypi/v/repository-updater.svg
 [pypi]: https://pypi.org/project/repository-updater
