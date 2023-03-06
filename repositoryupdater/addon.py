@@ -334,7 +334,7 @@ class Addon:
                     separators=(",", ": "),
                 )
             else:
-                yaml.dump(config, outfile, default_flow_style=False)
+                yaml.dump(config, outfile, default_flow_style=False, sort_keys=False)
 
         click.echo(crayons.green("Done"))
 
