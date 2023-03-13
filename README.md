@@ -293,7 +293,7 @@ our [GitHub Repository][repository].
 
 MIT License
 
-Copyright (c) 2018-2021 Franck Nijhof
+Copyright (c) 2018-2023 Franck Nijhof
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -323,7 +323,7 @@ SOFTWARE.
 [frenck]: https://github.com/frenck
 [issue]: https://github.com/hassio-addons/repository-updater/issues
 [license-shield]: https://img.shields.io/github/license/hassio-addons/repository-updater.svg
-[maintenance-shield]: https://img.shields.io/maintenance/yes/2021.svg
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2023.svg
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-production%20ready-brightgreen.svg
 [pypi-shield]: https://img.shields.io/pypi/v/repository-updater.svg
 [pypi]: https://pypi.org/project/repository-updater
