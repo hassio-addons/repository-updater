@@ -1,4 +1,4 @@
-FROM python:3.9-alpine3.14
+FROM python:3.10-alpine3.17
 
 # Setup base
 RUN \
@@ -8,7 +8,7 @@ RUN \
     && pip3 install \
         --no-cache-dir \
         --prefer-binary \
-        --find-links "https://wheels.home-assistant.io/alpine-3.14/amd64/" \
+        --find-links "https://wheels.home-assistant.io/musllinux/" \
         repository-updater==1.2.2
 
 # Entrypoint
