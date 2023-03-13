@@ -40,7 +40,7 @@ setup(
         "emoji==1.6.0",
         "GitPython==3.1.30",
         "Jinja2==3.1.2",
-        "PyGithub==1.55",
+        "PyGithub==1.58.0",
         "python-dateutil==2.8.2",
         "PyYAML==6.0",
         "semver==2.13.0",
