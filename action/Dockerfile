@@ -1,4 +1,4 @@
-FROM python:3.9-alpine3.14
+FROM python:3.10-alpine3.17
 
 # Setup base
 RUN \
@@ -10,7 +10,7 @@ RUN \
         --no-cache-dir \
         --prefer-binary \
         --find-links "https://wheels.home-assistant.io/alpine-3.14/amd64/" \
-        repository-updater==1.2.2
+        repository-updater==1.2.3
 
 COPY entrypoint.sh /entrypoint.sh
 
