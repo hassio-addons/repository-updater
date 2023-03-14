@@ -354,7 +354,7 @@ class Addon:
         else:
             changelog += "- %s\n" % (self.current_commit.commit.message)
 
-        changelog = emoji.emojize(changelog, use_aliases=True)
+        changelog = emoji.emojize(changelog, language='alias')
 
         with open(
             os.path.join(
