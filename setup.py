@@ -43,7 +43,7 @@ setup(
         "PyGithub==1.58.1",
         "python-dateutil==2.8.2",
         "PyYAML==6.0",
-        "semver==2.13.0",
+        "semver==3.0.0",
     ],
     entry_points="""
         [console_scripts]
