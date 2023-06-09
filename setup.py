@@ -37,7 +37,7 @@ setup(
     install_requires=[
         "click==8.1.3",
         "crayons==0.4.0",
-        "emoji==2.4.0",
+        "emoji==2.5.0",
         "GitPython==3.1.31",
         "Jinja2==3.1.2",
         "PyGithub==1.58.2",
