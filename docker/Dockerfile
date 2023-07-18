@@ -24,4 +24,4 @@ LABEL \
     org.opencontainers.image.licenses="MIT" \
     org.opencontainers.image.url="https://addons.community" \
     org.opencontainers.image.source="https://github.com/hassio-addons/repository-updater" \
-    org.opencontainers.image.documentation="https://github.com/hassio-addons/repository-updater/blob/master/README.md"
+    org.opencontainers.image.documentation="https://github.com/hassio-addons/repository-updater/blob/main/README.md"
