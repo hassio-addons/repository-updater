@@ -314,7 +314,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 [commits-shield]: https://img.shields.io/github/commit-activity/y/hassio-addons/repository-updater.svg
-[commits]: https://github.com/hassio-addons/repository-updater/commits/master
+[commits]: https://github.com/hassio-addons/repository-updater/commits/main
 [contributors]: https://github.com/hassio-addons/repository-updater/graphs/contributors
 [discord-shield]: https://img.shields.io/discord/330944238910963714.svg
 [discord]: https://discord.gg/c5DvZ4e
