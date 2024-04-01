@@ -38,7 +38,7 @@ setup(
         "click==8.1.7",
         "crayons==0.4.0",
         "emoji==2.11.0",
-        "GitPython==3.1.42",
+        "GitPython==3.1.43",
         "Jinja2==3.1.3",
         "PyGithub==2.3.0",
         "python-dateutil==2.9.0.post0",
