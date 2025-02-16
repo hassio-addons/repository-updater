@@ -1,4 +1,4 @@
-FROM python:3.11-alpine3.18
+FROM python:3.13-alpine3.21
 
 # Setup base
 RUN \
