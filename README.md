@@ -189,6 +189,7 @@ list contains the following variables:
 - **description**: Description of the add-on
 - **url**: URL of the add-on
 - **repo**: URL to the add-on GitHub repo
+- **repo_slug**: add-on GitHub slug (:user/:repo)
 - **archs**: List of supported architectures by this add-on
 - **slug**: The add-on slug
 - **target**: The target directory of the add-on inside the add-ons repository

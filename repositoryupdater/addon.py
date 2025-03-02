@@ -440,6 +440,7 @@ class Addon:
         data["description"] = self.description
         data["url"] = self.url
         data["repo"] = self.addon_repository.html_url
+        data["repo_slug"] = self.addon_repository.full_name
         data["archs"] = self.archs
         data["slug"] = self.slug
         data["target"] = self.repository_target
