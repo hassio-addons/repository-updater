@@ -39,7 +39,7 @@ setup(
         "crayons==0.4.0",
         "emoji==2.14.1",
         "GitPython==3.1.44",
-        "Jinja2==3.1.5",
+        "Jinja2==3.1.6",
         "PyGithub==2.6.1",
         "python-dateutil==2.9.0.post0",
         "PyYAML==6.0.2",
