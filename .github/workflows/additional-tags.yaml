@@ -11,12 +11,19 @@ on:
       - published
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   additional-tags:
     name: 🏷 Additional Tags
     runs-on: ubuntu-latest
     steps:
       - name: ⤵️ Check out code from GitHub
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
       - name: 🚀 Run Release Tracker
-        uses: vweevers/additional-tags-action@v2.0.0
+        uses: vweevers/additional-tags-action@21d5bc5f2d09bdab00fcdbb0488d920eca317619 # v2.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

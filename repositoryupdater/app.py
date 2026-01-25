@@ -1,8 +1,9 @@
 """
-Add-on Module.
+Apps Module.
 
-Represents / handles all Home Assistant add-on specific logic
+Represents / handles all Home Assistant app specific logic
 """
+
 from __future__ import annotations
 
 import json
@@ -28,15 +29,15 @@ from repositoryupdater.github import GitHub
 from .const import CHANNEL_BETA, CHANNEL_EDGE
 
 
-class Addon:
-    """Object representing an Home Assistant add-on."""
+class App:
+    """Object representing an Home Assistant app."""
 
     repository_target: str
-    addon_target: str
+    app_target: str
     image: str
     repository: Repo
     updating: bool
-    addon_repository: Repository
+    app_repository: Repository
     current_version: str
     current_commit: Commit
     current_release: GitRelease
@@ -60,18 +61,18 @@ class Addon:
         repository: Repo,
         repository_target: str,
         image: str,
-        addon_repository: Repository,
-        addon_target: str,
+        app_repository: Repository,
+        app_target: str,
         channel: str,
         updating: bool,
     ):
-        """Initialize a new Home Assistant add-on object."""
+        """Initialize a new Home Assistant app object."""
         self.github = github
         self.repository_target = repository_target
-        self.addon_target = addon_target
+        self.app_target = app_target
         self.image = image
         self.repository = repository
-        self.addon_repository = addon_repository
+        self.app_repository = app_repository
         self.archs = ["aarch64", "amd64", "armhf", "armv7", "i386"]
         self.latest_is_release = True
         self.updating = updating
@@ -81,7 +82,7 @@ class Addon:
         self.latest_commit = None
 
         click.echo(
-            "Loading add-on information from: %s" % self.addon_repository.html_url
+            "Loading app information from: %s" % self.app_repository.html_url
         )
 
         self.__load_current_info()
@@ -89,25 +90,25 @@ class Addon:
             self.__load_latest_info(channel)
             if self.needs_update(False):
                 click.echo(
-                    crayons.yellow("This add-on has an update waiting to be published!")
+                    crayons.yellow("This app has an update waiting to be published!")
                 )
             else:
-                click.echo(crayons.green("This add-on is up to date."))
+                click.echo(crayons.green("This app is up to date."))
 
     def clone_repository(self):
-        """Clone the add-on source to a local working directory."""
-        click.echo("Cloning add-on git repository...", nl=False)
+        """Clone the app source to a local working directory."""
+        click.echo("Cloning app git repository...", nl=False)
         self.git_repo = self.github.clone(
-            self.addon_repository, tempfile.mkdtemp(prefix=self.addon_target)
+            self.app_repository, tempfile.mkdtemp(prefix=self.app_target)
         )
         self.git_repo.git.checkout(self.current_commit.sha)
         click.echo(crayons.green("Cloned!"))
 
     def update(self):
-        """Update this add-on inside the given add-on repository."""
+        """Update this app inside the given app repository."""
         if not self.updating:
             click.echo(
-                crayons.red("Cannot update add-on that was marked not being updated")
+                crayons.red("Cannot update app that was marked not being updated")
             )
             sys.exit(1)
 
@@ -116,14 +117,14 @@ class Addon:
         self.current_commit = self.latest_commit
 
         self.clone_repository()
-        self.ensure_addon_dir()
-        self.generate_addon_config()
+        self.ensure_app_dir()
+        self.generate_app_config()
         self.update_static_files()
         self.generate_readme()
-        self.generate_addon_changelog()
+        self.generate_app_changelog()
 
     def __load_current_info(self):
-        """Load current add-on version information and current config."""
+        """Load current app version information and current config."""
         config_files = ("config.json", "config.yaml", "config.yml")
         for config_file in config_files:
             if os.path.exists(
@@ -169,17 +170,17 @@ class Addon:
 
         if current_parsed_version:
             try:
-                ref = self.addon_repository.get_git_ref("tags/" + self.current_version)
+                ref = self.app_repository.get_git_ref("tags/" + self.current_version)
             except UnknownObjectException:
-                ref = self.addon_repository.get_git_ref("tags/v" + self.current_version)
-            self.current_commit = self.addon_repository.get_commit(ref.object.sha)
+                ref = self.app_repository.get_git_ref("tags/v" + self.current_version)
+            self.current_commit = self.app_repository.get_commit(ref.object.sha)
         else:
             try:
-                self.current_commit = self.addon_repository.get_commit(
+                self.current_commit = self.app_repository.get_commit(
                     f"v{self.current_version}"
                 )
             except GithubException:
-                self.current_commit = self.addon_repository.get_commit(
+                self.current_commit = self.app_repository.get_commit(
                     self.current_version
                 )
 
@@ -189,8 +190,8 @@ class Addon:
         )
 
     def __load_latest_info(self, channel: str):
-        """Determine latest available add-on version and config."""
-        for release in self.addon_repository.get_releases():
+        """Determine latest available app version and config."""
+        for release in self.app_repository.get_releases():
             self.latest_version = release.tag_name.lstrip("v")
             prerelease = (
                 release.prerelease
@@ -202,13 +203,13 @@ class Addon:
             break
 
         if self.latest_release:
-            ref = self.addon_repository.get_git_ref(
+            ref = self.app_repository.get_git_ref(
                 "tags/" + self.latest_release.tag_name
             )
-            self.latest_commit = self.addon_repository.get_commit(ref.object.sha)
+            self.latest_commit = self.app_repository.get_commit(ref.object.sha)
 
         if channel == CHANNEL_EDGE:
-            last_commit = self.addon_repository.get_commits()[0]
+            last_commit = self.app_repository.get_commits()[0]
             if not self.latest_commit or last_commit.sha != self.latest_commit.sha:
                 self.latest_version = last_commit.sha[:7]
                 self.latest_commit = last_commit
@@ -225,8 +226,8 @@ class Addon:
         config_file = None
         for config_file in config_files:
             try:
-                latest_config_file = self.addon_repository.get_contents(
-                    os.path.join(self.addon_target, config_file), self.latest_commit.sha
+                latest_config_file = self.app_repository.get_contents(
+                    os.path.join(self.app_target, config_file), self.latest_commit.sha
                 )
                 break
             except UnknownObjectException:
@@ -235,7 +236,7 @@ class Addon:
         if config_file is None or latest_config_file is None:
             click.echo(
                 crayons.red(
-                    "An error occurred while loading the remote add-on "
+                    "An error occurred while loading the remote app "
                     "configuration file"
                 )
             )
@@ -260,33 +261,33 @@ class Addon:
         )
 
     def needs_update(self, force: bool):
-        """Determine whether or not there is add-on updates available."""
+        """Determine whether or not there is app updates available."""
         return self.updating and (
             force
             or self.current_version != self.latest_version
             or self.current_commit != self.latest_commit
         )
 
-    def ensure_addon_dir(self):
-        """Ensure the add-on target directory exists."""
-        addon_path = os.path.join(self.repository.working_dir, self.repository_target)
-        addon_translations_path = os.path.join(addon_path, "translations")
+    def ensure_app_dir(self):
+        """Ensure the app target directory exists."""
+        app_path = os.path.join(self.repository.working_dir, self.repository_target)
+        app_translations_path = os.path.join(app_path, "translations")
 
-        if not os.path.exists(addon_path):
-            os.mkdir(addon_path)
+        if not os.path.exists(app_path):
+            os.mkdir(app_path)
 
-        if not os.path.exists(addon_translations_path):
-            os.mkdir(addon_translations_path)
+        if not os.path.exists(app_translations_path):
+            os.mkdir(app_translations_path)
 
-    def generate_addon_config(self):
-        """Generate add-on configuration file."""
-        click.echo("Generating add-on configuration...", nl=False)
+    def generate_app_config(self):
+        """Generate app configuration file."""
+        click.echo("Generating app configuration...", nl=False)
 
         config_files = ("config.json", "config.yaml", "config.yml")
         config_file = None
         for config_file in config_files:
             if os.path.exists(
-                os.path.join(self.git_repo.working_dir, self.addon_target, config_file)
+                os.path.join(self.git_repo.working_dir, self.app_target, config_file)
             ):
                 break
             config_file = None
@@ -296,7 +297,7 @@ class Addon:
             sys.exit(1)
 
         with open(
-            os.path.join(self.git_repo.working_dir, self.addon_target, config_file),
+            os.path.join(self.git_repo.working_dir, self.app_target, config_file),
             encoding="utf8",
         ) as f:
             config = (
@@ -338,14 +339,14 @@ class Addon:
 
         click.echo(crayons.green("Done"))
 
-    def generate_addon_changelog(self):
-        """Generate add-on changelog."""
-        click.echo("Generating add-on changelog...", nl=False)
+    def generate_app_changelog(self):
+        """Generate app changelog."""
+        click.echo("Generating app changelog...", nl=False)
         changelog = ""
         if self.latest_is_release:
             changelog = self.current_release.body
         elif self.latest_release:
-            compare = self.addon_repository.compare(
+            compare = self.app_repository.compare(
                 self.current_release.tag_name, self.current_commit.sha
             )
             changelog = "# Changelog since %s\n" % self.current_release.tag_name
@@ -354,7 +355,7 @@ class Addon:
         else:
             changelog += "- %s\n" % (self.current_commit.commit.message)
 
-        changelog = emoji.emojize(changelog, language='alias')
+        changelog = emoji.emojize(changelog, language="alias")
 
         with open(
             os.path.join(
@@ -368,7 +369,7 @@ class Addon:
         click.echo(crayons.green("Done"))
 
     def update_static_files(self):
-        """Update the static add-on files within the repository."""
+        """Update the static app files within the repository."""
         self.update_static("logo.png")
         self.update_static("icon.png")
         self.update_static("README.md")
@@ -377,12 +378,12 @@ class Addon:
         self.update_static("translations")
 
     def update_static(self, file):
-        """Download latest static file/directory from add-on repository."""
-        click.echo(f"Syncing add-on static {file}...", nl=False)
+        """Download latest static file/directory from app repository."""
+        click.echo(f"Syncing app static {file}...", nl=False)
         local_file = os.path.join(
             self.repository.working_dir, self.repository_target, file
         )
-        remote_file = os.path.join(self.git_repo.working_dir, self.addon_target, file)
+        remote_file = os.path.join(self.git_repo.working_dir, self.app_target, file)
 
         if os.path.exists(remote_file) and os.path.isfile(remote_file):
             copyfile(remote_file, local_file)
@@ -398,13 +399,13 @@ class Addon:
             click.echo(crayons.blue("Skipping"))
 
     def generate_readme(self):
-        """Re-generate the add-on readme based on a template."""
-        click.echo("Re-generating add-on README.md file...", nl=False)
+        """Re-generate the app readme based on a template."""
+        click.echo("Re-generating app README.md file...", nl=False)
 
-        addon_file = os.path.join(
-            self.git_repo.working_dir, self.addon_target, ".README.j2"
+        app_file = os.path.join(
+            self.git_repo.working_dir, self.app_target, ".README.j2"
         )
-        if not os.path.exists(addon_file):
+        if not os.path.exists(app_file):
             click.echo(crayons.blue("Skipping"))
             return
 
@@ -422,7 +423,7 @@ class Addon:
 
         with open(local_file, "w", encoding="utf8") as outfile:
             outfile.write(
-                jinja.from_string(open(addon_file, encoding="utf8").read()).render(
+                jinja.from_string(open(app_file, encoding="utf8").read()).render(
                     **data
                 )
             )
@@ -430,7 +431,7 @@ class Addon:
         click.echo(crayons.green("Done"))
 
     def get_template_data(self):
-        """Return a dictionary with add-on information."""
+        """Return a dictionary with app information."""
         data = {}
         if not self.current_version:
             return data
@@ -439,8 +440,8 @@ class Addon:
         data["channel"] = self.channel
         data["description"] = self.description
         data["url"] = self.url
-        data["repo"] = self.addon_repository.html_url
-        data["repo_slug"] = self.addon_repository.full_name
+        data["repo"] = self.app_repository.html_url
+        data["repo_slug"] = self.app_repository.full_name
         data["archs"] = self.archs
         data["slug"] = self.slug
         data["target"] = self.repository_target

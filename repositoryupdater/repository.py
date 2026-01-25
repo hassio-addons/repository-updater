@@ -1,7 +1,7 @@
 """
 Repository module.
 
-Contains the add-ons repository representation / configuration
+Contains the apps repository representation / configuration
 and handles the automated maintenance / updating of it.
 """
 import os
@@ -18,50 +18,50 @@ from github.GithubException import UnknownObjectException
 from github.Repository import Repository as GitHubRepository
 from jinja2 import Environment, FileSystemLoader
 
-from .addon import Addon
+from .app import App
 from .const import CHANNELS
 from .github import GitHub
 
 
 class Repository:
-    """Represents an Home Assistant add-ons repository."""
+    """Represents an Home Assistant apps repository."""
 
-    addons: List[Addon]
+    apps: List[App]
     github: GitHub
     github_repository: GitHubRepository
     git_repo: Repo
     force: bool
     channel: str
 
-    def __init__(self, github: GitHub, repository: str, addon: str, force: bool):
-        """Initialize new add-on Repository object."""
+    def __init__(self, github: GitHub, repository: str, app: str, force: bool):
+        """Initialize new app Repository object."""
         self.github = github
         self.force = force
-        self.addons = []
+        self.apps = []
 
         click.echo(
-            'Locating add-on repository "%s"...' % crayons.yellow(repository), nl=False
+            'Locating app repository "%s"...' % crayons.yellow(repository), nl=False
         )
         self.github_repository = github.get_repo(repository)
         click.echo(crayons.green("Found!"))
 
         self.clone_repository()
-        self.load_repository(addon)
+        self.load_repository(app)
 
     def update(self):
         """Update this repository using configuration and data gathered."""
         self.generate_readme()
         needs_push = self.commit_changes(":books: Updated README")
 
-        for addon in self.addons:
-            if addon.needs_update(self.force):
+        for app in self.apps:
+            if app.needs_update(self.force):
                 click.echo(crayons.green("-" * 50, bold=True))
-                click.echo(crayons.green(f"Updating add-on {addon.repository_target}"))
-                needs_push = self.update_addon(addon) or needs_push
+                click.echo(crayons.green(f"Updating app {app.repository_target}"))
+                needs_push = self.update_app(app) or needs_push
 
         if needs_push:
             click.echo(crayons.green("-" * 50, bold=True))
-            click.echo("Pushing updates onto Git add-ons repository...", nl=False)
+            click.echo("Pushing updates onto Git apps repository...", nl=False)
             self.git_repo.git.push()
             click.echo(crayons.green("Done"))
 
@@ -78,44 +78,46 @@ class Repository:
         click.echo(crayons.green("Done: ") + crayons.cyan(message))
         return True
 
-    def update_addon(self, addon):
-        """Update repository for a specific add-on."""
-        addon.update()
+    def update_app(self, app):
+        """Update repository for a specific app."""
+        app.update()
         self.generate_readme()
 
-        if addon.latest_is_release:
-            message = ":tada: Release of add-on %s %s" % (
-                addon.name,
-                addon.current_version,
+        if app.latest_is_release:
+            message = ":tada: Release of app %s %s" % (
+                app.name,
+                app.current_version,
             )
         else:
-            message = ":arrow_up: Updating add-on %s to %s" % (
-                addon.name,
-                addon.current_version,
+            message = ":arrow_up: Updating app %s to %s" % (
+                app.name,
+                app.current_version,
             )
         if self.force:
             message += " (forced update)"
 
         return self.commit_changes(message)
 
-    def load_repository(self, addon: str):
-        """Load repository configuration from remote repository and add-ons."""
-        click.echo("Locating repository add-on list...", nl=False)
-        try:
-            config = self.github_repository.get_contents(".addons.yml")
-        except UnknownObjectException:
-            print(
-                "Seems like the repository does not contain an "
-                ".addons.yml file, falling back to legacy file."
-            )
+    def load_repository(self, app: str):
+        """Load repository configuration from remote repository and apps."""
+        click.echo("Locating repository app list...", nl=False)
+        config = None
+        for config_file in (".apps.yml", ".addons.yml", ".hassio-addons.yml"):
             try:
-                config = self.github_repository.get_contents(".hassio-addons.yml")
+                config = self.github_repository.get_contents(config_file)
+                break
             except UnknownObjectException:
-                print(
-                    "Seems like the repository does not contain an "
-                    ".hassio-addons.yml file either."
+                continue
+
+        if config is None:
+            click.echo(crayons.red("Failed!"))
+            click.echo(
+                crayons.red(
+                    "Repository does not contain an .apps.yml, "
+                    ".addons.yml, or .hassio-addons.yml file."
                 )
-                sys.exit(1)
+            )
+            sys.exit(1)
 
         config = yaml.safe_load(config.decoded_content)
         click.echo(crayons.green("Loaded!"))
@@ -131,35 +133,36 @@ class Repository:
         self.channel = config["channel"]
         click.echo("Repository channel: %s" % crayons.magenta(self.channel))
 
-        if addon:
-            click.echo(crayons.yellow('Only updating addon "%s" this run!' % addon))
+        if app:
+            click.echo(crayons.yellow('Only updating app "%s" this run!' % app))
 
-        click.echo("Start loading repository add-ons:")
-        for target, addon_config in config["addons"].items():
+        click.echo("Start loading repository apps:")
+        apps_config = config.get("apps", config.get("addons", {}))
+        for target, app_config in apps_config.items():
             click.echo(crayons.cyan("-" * 50, bold=True))
-            click.echo(crayons.cyan(f"Loading add-on {target}"))
-            self.addons.append(
-                Addon(
+            click.echo(crayons.cyan(f"Loading app {target}"))
+            self.apps.append(
+                App(
                     self.github,
                     self.git_repo,
                     target,
-                    addon_config["image"],
-                    self.github.get_repo(addon_config["repository"]),
-                    addon_config["target"],
+                    app_config["image"],
+                    self.github.get_repo(app_config["repository"]),
+                    app_config["target"],
                     self.channel,
                     (
-                        not addon
-                        or addon_config["repository"] == addon
-                        or target == addon
+                        not app
+                        or app_config["repository"] == app
+                        or target == app
                     ),
                 )
             )
         click.echo(crayons.cyan("-" * 50, bold=True))
-        click.echo("Done loading all repository add-ons")
+        click.echo("Done loading all repository apps")
 
     def clone_repository(self):
-        """Clone the add-on repository to a local working directory."""
-        click.echo("Cloning add-on repository...", nl=False)
+        """Clone the app repository to a local working directory."""
+        click.echo("Cloning app repository...", nl=False)
         self.git_repo = self.github.clone(
             self.github_repository, tempfile.mkdtemp(prefix="repoupdater")
         )
@@ -167,19 +170,19 @@ class Repository:
 
     def generate_readme(self):
         """Re-generate the repository readme based on a template."""
-        click.echo("Re-generating add-on repository README.md file...", nl=False)
+        click.echo("Re-generating app repository README.md file...", nl=False)
 
         if not os.path.exists(os.path.join(self.git_repo.working_dir, ".README.j2")):
             click.echo(crayons.blue("skipping"))
             return
 
-        addon_data = []
-        for addon in self.addons:
-            data = addon.get_template_data()
+        app_data = []
+        for app in self.apps:
+            data = app.get_template_data()
             if data:
-                addon_data.append(addon.get_template_data())
+                app_data.append(app.get_template_data())
 
-        addon_data = sorted(addon_data, key=lambda x: x["name"])
+        app_data = sorted(app_data, key=lambda x: x["name"])
 
         jinja = Environment(
             loader=FileSystemLoader(self.git_repo.working_dir),
@@ -192,7 +195,8 @@ class Repository:
         ) as outfile:
             outfile.write(
                 jinja.get_template(".README.j2").render(
-                    addons=addon_data,
+                    apps=app_data,
+                    addons=app_data,  # Backward compatibility
                     channel=self.channel,
                     description=self.github_repository.description,
                     homepage=self.github_repository.homepage,

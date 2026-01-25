@@ -1,4 +1,5 @@
-"Home Assistant add-ons repository updater setup."
+"Home Assistant apps repository updater setup."
+
 from setuptools import find_packages, setup
 
 from repositoryupdater import APP_DESCRIPTION, APP_NAME, APP_VERSION
@@ -7,18 +8,17 @@ setup(
     name=APP_NAME,
     version=APP_VERSION,
     author="Franck Nijhof",
-    author_email="frenck@addons.community",
+    author_email="opensource@frenck.dev",
     description=APP_DESCRIPTION.split("\n")[0],
     long_description=APP_DESCRIPTION,
     license="MIT",
     url="https://github.com/hassio-addons/repository-updater",
     keywords=[
-        "addons",
-        "repository",
+        "apps",
+        "frenck",
         "home assistant",
         "home-assistant",
-        "add-ons",
-        "frenck",
+        "repository",
     ],
     platforms="any",
     classifiers=[
@@ -29,6 +29,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Programming Language :: Python :: 3",
         "Topic :: Software Development :: Build Tools",
         "Topic :: Utilities",
