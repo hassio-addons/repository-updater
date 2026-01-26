@@ -9,7 +9,7 @@ RUN \
         --no-cache-dir \
         --prefer-binary \
         --find-links "https://wheels.home-assistant.io/musllinux/" \
-        repository-updater==1.3.0
+        repository-updater==2.0.0
 
 # Entrypoint
 ENTRYPOINT ["repository-updater"]
