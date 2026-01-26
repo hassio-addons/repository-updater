@@ -1,6 +1,6 @@
 ---
-name: "Community Home Assistant Add-ons Repository Updater"
-description: Tool for updating Home Assistant Add-on repositories.
+name: "Home Assistant Community Apps Repository Updater"
+description: Tool for updating Home Assistant Apps repositories.
 author: frenck
 
 branding:
@@ -12,10 +12,13 @@ inputs:
     description: GitHub token that is allowed to write/commit to the target repo
     required: true
   repository:
-    description: The add-on repository to update (e.g., frenck/repository)
+    description: The app repository to update (e.g., frenck/repository)
+    required: false
+  app:
+    description: Slug of the app to update the repository for
     required: false
   addon:
-    description: Slug of the add-on to update the repository for
+    description: (Deprecated) Use 'app' instead. Slug of the app to update the repository for
     required: false
   force:
     description: Force repository update, even if no changes are detected

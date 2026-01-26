@@ -25,15 +25,21 @@ from .repository import Repository
 )
 @click.option(
     "--repository",
-    prompt="Home Assistant Addons repository to update",
-    help="The Home Assistant Addons repository to update",
+    prompt="Home Assistant Apps repository to update",
+    help="The Home Assistant Apps repository to update",
     metavar="<orgname/reponame>",
 )
-@click.option("--addon", help="Update a single/specific add-on", metavar="<TARGET>")
-@click.option("--force", is_flag=True, help="Force an update of the add-on repository")
+@click.option(
+    "--app",
+    "--addon",
+    "app",
+    help="Update a single/specific app",
+    metavar="<TARGET>",
+)
+@click.option("--force", is_flag=True, help="Force an update of the app repository")
 @click.version_option(APP_VERSION, prog_name=APP_FULL_NAME)
-def repository_updater(token, repository, addon, force):
-    """Community Home Assistant Add-ons Repository Updater."""
+def repository_updater(token, repository, app, force):
+    """Home Assistant Community Apps Repository Updater."""
     click.echo(crayons.blue(APP_FULL_NAME, bold=True))
     click.echo(crayons.blue("-" * 51, bold=True))
     github = GitHub(token)
@@ -41,7 +47,7 @@ def repository_updater(token, repository, addon, force):
         "Authenticated with GitHub as %s"
         % crayons.yellow(github.get_user().name, bold=True)
     )
-    repository = Repository(github, repository, addon, force)
+    repository = Repository(github, repository, app, force)
     repository.update()
     repository.cleanup()
 

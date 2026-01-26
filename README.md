@@ -1,4 +1,4 @@
-# Community Home Assistant Add-ons Repository Updater
+# Home Assistant Community Apps Repository Updater
 
 [![PyPi Release][pypi-shield]][pypi]
 [![GitHub Activity][commits-shield]][commits]
@@ -12,14 +12,14 @@
 
 ## About
 
-Reads remote add-on repositories, determines versions and generates
-changelogs to update the add-on repository fully automated.
+Reads remote app repositories, determines versions and generates
+changelogs to update the app repository fully automated.
 
-Mainly used by the Community Home Assistant Add-ons project.
+Mainly used by the Home Assistant Community Apps project.
 
 Please note, this program cannot be used with the general documented
-Home Assistant add-on repository approach and only works in the setup where
-each add-on has its own GitHub repository.
+Home Assistant app repository approach and only works in the setup where
+each app has its own GitHub repository.
 
 ## Installation
 
@@ -36,14 +36,15 @@ The Repository Updater is a pretty simple, straightforward CLI tool.
 ```txt
 Usage: repository-updater [OPTIONS]
 
-  Community Home Assistant Add-ons Repository Updater.
+  Home Assistant Community Apps Repository Updater.
 
 Options:
   --token <TOKEN>                 GitHub access token
   --repository <orgname/reponame>
-                                  The Home Assistant Addons repository to update
-  --addon <TARGET>                Update a single/specific add-on
-  --force                         Force an update of the add-on repository
+                                  The Home Assistant Apps repository to update
+  --app <TARGET>                  Update a single/specific app
+  --addon <TARGET>                (Deprecated) Use --app instead
+  --force                         Force an update of the app repository
   --version                       Show the version and exit.
   --help                          Show this message and exit.
 ```
@@ -82,24 +83,24 @@ on:
 
 jobs:
   whatever:
-    name: Running updater for ${{ github.event.client_payload.addon }}
+    name: Running updater for ${{ github.event.client_payload.app }}
     runs-on: ubuntu-latest
     steps:
       - name: 🚀 Run Repository Updater
         uses: hassio-addons/repository-updater@v1
         with:
-          addon: ${{ github.event.client_payload.addon }}
+          app: ${{ github.event.client_payload.app }}
           repository: ${{ github.repository }}
           token: ${{ secrets.UPDATER_TOKEN }}
 ```
 
-Once that workflow is in place, from an add-on repository, you can trigger
+Once that workflow is in place, from an app repository, you can trigger
 the above workflow to run. This can be done by dispatching a signal to
 the updater workflow:
 
 ```yaml
 publish:
-  name: 📢 Publish Add-on
+  name: 📢 Publish App
   runs-on: ubuntu-latest
   steps:
     - name: 🚀 Dispatch Repository Updater update signal
@@ -108,131 +109,130 @@ publish:
         token: ${{ secrets.DISPATCH_TOKEN }}
         repository: hassio-addons/repository
         event-type: update
-        client-payload: '{"addon": "my-addon"}'
+        client-payload: '{"app": "my-app"}'
 ```
 
-## Add-ons Repository Configuration
+## Apps Repository Configuration
 
 In order for the Repository Updater to do its job, we need feed it some
-information. It needs to know which add-ons there are currently in the
-add-ons repository and where each add-on is located on GitHub.
+information. It needs to know which apps there are currently in the
+apps repository and where each app is located on GitHub.
 
-Secondly, it needs to know the stability channel of the add-ons repository.
+Secondly, it needs to know the stability channel of the apps repository.
 There are 3 stability channel levels available:
 
 - **stable**: Stable releases
 - **beta**: Beta / test releases
 - **edge**: Latest builds, usually build straight from development
 
-Create a `.addons.yml` file in the root of the add-ons repository,
+Create a `.apps.yml` file in the root of the apps repository,
 which looks like this:
 
 ```yaml
 channel: edge
-addons:
+apps:
   example:
-    repository: hassio-addons/addon-example
+    repository: hassio-addons/app-example
     target: example
     image: hassioaddons/example-{arch}
   another:
-    repository: hassio-addons/addon-another
+    repository: hassio-addons/app-another
     target: homebridge
     image: ghcr.io/hassio-addons/test-{arch}
   demo:
-    repository: hassio-addons/addon-demo
+    repository: hassio-addons/app-demo
     target: src
     image: ghcr.io/hassio-addons/demo/{arch}
 ```
 
-The target in the add-ons repository is specified as the key for each add-on,
-this will be the directory name inside the add-ons repository as well. This is
-different from the `target` key, in a way that that key specified the add-on
-target directory inside the git repository of the add-on itself.
+The target in the apps repository is specified as the key for each app,
+this will be the directory name inside the apps repository as well. This is
+different from the `target` key, in a way that that key specified the app
+target directory inside the git repository of the app itself.
 
-In the above example, `demo` will be the name of the add-on directory
-inside the add-ons repository, while `src` is the directory in the add-on
-git repo that contains the actual add-on.
+In the above example, `demo` will be the name of the app directory
+inside the apps repository, while `src` is the directory in the app
+git repo that contains the actual app.
 
-`repository` specified the location of the add-on on GitHub. This must be
+`repository` specified the location of the app on GitHub. This must be
 in `organization/repository` or `username/repository` format.
 
 Finally, the `image` key defines the Docker container images on Docker Hub
-or the GitHub Container Registry for this add-on. `{arch}` can be used as a
+or the GitHub Container Registry for this app. `{arch}` can be used as a
 placeholder for the architecture and is automatically replaced internally by
 the Repository Updater.
 
-## Add-ons Repository README template
+## Apps Repository README template
 
-It is nice to have an up to date `README.md` file in your add-ons repository,
+It is nice to have an up to date `README.md` file in your apps repository,
 but maintaining one, can be quite time-consuming. The Repository updater is
 able to update the `README.md` file for you each run.
 
 This is done using a Jinja2 template. Simply create a file called `.README.j2`
-in the root of your add-ons repository. Most information is collected
-from the add-on `config.json` and GitHub repo.
+in the root of your apps repository. Most information is collected
+from the app `config.json` and GitHub repo.
 
 The following variables are available in your templates and are passed into it
 upon rendering your template.
 
-- **addons**: A list of add-ons in this add-ons repository
-- **channel**: The channel type of this add-ons repository
-- **description**: The GitHub add-ons repository description
-- **homepage**: The GitHub add-ons repository specified homepage URL
-- **issues**: The URL to the issues listing of the GitHub add-ons repository
+- **apps**: A list of apps in this apps repository
+- **addons**: Alias for `apps` (for backward compatibility)
+- **channel**: The channel type of this apps repository
+- **description**: The GitHub apps repository description
+- **homepage**: The GitHub apps repository specified homepage URL
+- **issues**: The URL to the issues listing of the GitHub apps repository
 - **name**: The full GitHub name, e.g., `hassio-addons/repository`
-- **repo**: The full URL to the GitHub add-ons repository
+- **repo**: The full URL to the GitHub apps repository
 
-In the above variables, a list of `addons` was specified. Each item in this
+In the above variables, a list of `apps` was specified. Each item in this
 list contains the following variables:
 
-- **name**: Name of the add-on
-- **description**: Description of the add-on
-- **url**: URL of the add-on
-- **repo**: URL to the add-on GitHub repo
-- **repo_slug**: add-on GitHub slug (:user/:repo)
-- **archs**: List of supported architectures by this add-on
-- **slug**: The add-on slug
-- **target**: The target directory of the add-on inside the add-ons repository
+- **name**: Name of the app
+- **description**: Description of the app
+- **url**: URL of the app
+- **repo**: URL to the app GitHub repo
+- **repo_slug**: app GitHub slug (:user/:repo)
+- **archs**: List of supported architectures by this app
+- **slug**: The app slug
+- **target**: The target directory of the app inside the apps repository
 - **image**: The (untouched) Docker Hub container image name
 - **images**: Dictionary of images per architecture
   - **aarch64**: `aarch64` DockerHub image (if arch is supported)
   - **amd64**: `amd64` DockerHub image (if arch is supported)
-  - **armhf**: `armhf` DockerHub image (if arch is supported)
-  - **i386**: `i386` DockerHub image (if arch is supported)
-- **version**: The version of the add-on
+- **version**: The version of the app
 - **commit**: Full SHA of the commit bound to the current version
 - **date**: Date and time of the above commit/version
 
 ## Examples
 
 It is quite a complex setup to create an example for in this little document.
-Nevertheless, see the [Community Home Assistant Addons Repository][repository]
-for an example of `.README.j2` and `.addons.yml` files.
+Nevertheless, see the [Home Assistant Community Apps Repository][repository]
+for an example of `.README.j2` and `.apps.yml` files.
 
-The community project also uses GitLab for building its add-ons. Each
-add-on runs this tool upon build, ensuring the repositories are always up to
-date. Be sure to check some of the add-ons out as well to learn more about
+The community project also uses GitLab for building its apps. Each
+app runs this tool upon build, ensuring the repositories are always up to
+date. Be sure to check some of the apps out as well to learn more about
 the whole setup.
 
 ## Why do this all
 
 Let me start by saying, there is nothing wrong with the documented way of
-setting up a Home Assistant add-ons repository. If you are just starting out
-developing add-ons, please use the official documented way. You can always
+setting up a Home Assistant apps repository. If you are just starting out
+developing apps, please use the official documented way. You can always
 decide to change your workflow.
 
 Nevertheless, there are some advantages using the alternative method:
 
-- Each add-on has its own Git repository, which allows for a maximum separation
-  of concerns. Each add-on has its own issue list, releases, and all other
+- Each app has its own Git repository, which allows for a maximum separation
+  of concerns. Each app has its own issue list, releases, and all other
   GitHub goodness.
 - Release and versioning is based on GitHub Releases / Git tagging. Which
   does not need updating of configuration files and is done with a single click.
-- Each add-on Git repository is downloadable and instantly buildable locally.
-- Every single piece of manual labor around maintaining an add-ons repository
+- Each app Git repository is downloadable and instantly buildable locally.
+- Every single piece of manual labor around maintaining an apps repository
   is fully automated. Building, testing, quality control, publishing, changelogs
-  and even the add-ons repository README are updated automatically.  This level
-  of automation allows us to focus completely on developing the actual add-on.
+  and even the apps repository README are updated automatically.  This level
+  of automation allows us to focus completely on developing the actual app.
 - Availability of Beta and Edge channels for everyone who's interested or
   willing to test.
 
@@ -283,18 +283,18 @@ The original setup of this repository is by [Franck Nijhof][frenck].
 For a full list of all authors and contributors,
 check [the contributor's page][contributors].
 
-## We have got some Home Assistant add-ons for you
+## We have got some Home Assistant apps for you
 
 Want some more functionality to your Home Assistant instance?
 
-We have created multiple add-ons for Home Assistant. For a full list, check out
+We have created multiple apps for Home Assistant. For a full list, check out
 our [GitHub Repository][repository].
 
 ## License
 
 MIT License
 
-Copyright (c) 2018-2025 Franck Nijhof
+Copyright (c) 2018-2026 Franck Nijhof
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -324,7 +324,7 @@ SOFTWARE.
 [frenck]: https://github.com/frenck
 [issue]: https://github.com/hassio-addons/repository-updater/issues
 [license-shield]: https://img.shields.io/github/license/hassio-addons/repository-updater.svg
-[maintenance-shield]: https://img.shields.io/maintenance/yes/2025.svg
+[maintenance-shield]: https://img.shields.io/maintenance/yes/2026.svg
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-production%20ready-brightgreen.svg
 [pypi-shield]: https://img.shields.io/pypi/v/repository-updater.svg
 [pypi]: https://pypi.org/project/repository-updater

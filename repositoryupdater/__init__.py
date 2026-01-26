@@ -1,17 +1,17 @@
 """
-Community Home Assistant Add-ons Repository Updater.
+Home Assistant Community Apps Repository Updater.
 
-Reads remote add-on repositories, determines versions and generates
-changelogs to update the add-on repository fully automated.
+Reads remote app repositories, determines versions and generates
+changelogs to update the app repository fully automated.
 
-Mainly used by the Community Home Assistant Add-ons project.
+Mainly used by the Home Assistant Community Apps project.
 
 Please note, this program cannot be used with the general documented
-Home Assistant add-on repository approach.
+Home Assistant app repository approach.
 """
 
 APP_NAME = "repository-updater"
-APP_FULL_NAME = "Community Home Assistant Add-ons Repository Updater"
+APP_FULL_NAME = "Home Assistant Community Apps Repository Updater"
 APP_VERSION = "1.3.0"
 APP_DESCRIPTION = __doc__
 
