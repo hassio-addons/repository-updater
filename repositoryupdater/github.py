@@ -15,12 +15,13 @@ class GitHub(PyGitHub):
 
     token: str
 
-    def __init__(self, login_or_token=None):
+    def __init__(self, login_or_token=None, fallback_email=None):
         """Initialize a new GitHub object."""
         super().__init__(
             login_or_token=login_or_token,
         )
         self.token = login_or_token
+        self.fallback_email = fallback_email
 
     def clone(self, repository: Repository, destination):
         """Clones a GitHub repository and returns a Git object."""
@@ -33,9 +34,11 @@ class GitHub(PyGitHub):
         repo = Repo.clone_from(repository.clone_url, destination, None, environ)
 
         config = repo.config_writer()
-        if self.get_user().email:
-            config.set_value("user", "email", self.get_user().email)
-        config.set_value("user", "name", self.get_user().name)
+        user = self.get_user()
+        email = user.email or self.fallback_email
+        if email:
+            config.set_value("user", "email", email)
+        config.set_value("user", "name", user.name)
         config.set_value("commit", "gpgsign", "false")
 
         return repo
