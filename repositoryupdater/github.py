@@ -37,5 +37,6 @@ class GitHub(PyGitHub):
             config.set_value("user", "email", self.get_user().email)
         config.set_value("user", "name", self.get_user().name)
         config.set_value("commit", "gpgsign", "false")
+        config.release()
 
         return repo
