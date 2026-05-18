@@ -36,7 +36,7 @@ setup(
     ],
     packages=find_packages(),
     install_requires=[
-        "click==8.3.3",
+        "click==8.4.0",
         "crayons==0.4.0",
         "emoji==2.15.0",
         "GitPython==3.1.50",
