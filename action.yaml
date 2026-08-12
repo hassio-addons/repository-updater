@@ -20,6 +20,9 @@ inputs:
   addon:
     description: (Deprecated) Use 'app' instead. Slug of the app to update the repository for
     required: false
+  email:
+    description: Email address used to write/commit to the target repo, required when the token is associated with a user that does not have a public email address
+    required: false
   force:
     description: Force repository update, even if no changes are detected
     default: "false"
