@@ -17,6 +17,9 @@ elif [[ -n "${INPUT_ADDON:-}" ]]; then
   options+=(--app "${INPUT_ADDON}")
 fi
 
+[[ -n "${INPUT_EMAIL:-}" ]] \
+  && options+=(--email "${INPUT_EMAIL}")
+
 [[ "${INPUT_FORCE,,}" = "true" ]] \
   && options+=(--force)
 
