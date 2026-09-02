@@ -79,6 +79,7 @@ class App:
 
     app_repository: GitHubRepository | None
     app_clone: Repo | None
+    clone_dir: Path | None
 
     current_version: str | None
     current_commit: Commit | None
@@ -114,6 +115,7 @@ class App:
 
         self.app_repository = None
         self.app_clone = None
+        self.clone_dir = None
 
         self.current_version = None
         self.current_commit = None
@@ -159,11 +161,18 @@ class App:
     def clone_repository(self) -> None:
         """Clone the app source to a local working directory."""
         self.output.step("Cloning app git repository")
-        self.app_clone = self.github.clone(
-            self.app_repository, tempfile.mkdtemp(prefix=self.config.app_target)
-        )
+        self.clone_dir = Path(tempfile.mkdtemp(prefix=self.config.app_target))
+        self.app_clone = self.github.clone(self.app_repository, str(self.clone_dir))
         self.app_clone.git.checkout(self.current_commit.sha)
         self.output.done("Cloned!")
+
+    def cleanup(self) -> None:
+        """Remove the temporary clone of this app's own repository."""
+        if self.clone_dir is None:
+            return
+
+        rmtree(self.clone_dir, ignore_errors=True)
+        self.clone_dir = None
 
     def update(self) -> None:
         """Update this app inside the given app repository."""
