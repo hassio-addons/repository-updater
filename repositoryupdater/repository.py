@@ -34,6 +34,7 @@ class Repository:
     apps: list[App]
     github_repository: GitHubRepository | None
     git_repo: Repo | None
+    clone_dir: Path | None
     channel: str | None
 
     def __init__(
@@ -55,6 +56,7 @@ class Repository:
         self.apps = []
         self.github_repository = None
         self.git_repo = None
+        self.clone_dir = None
         self.channel = None
 
     def load(self) -> None:
@@ -166,9 +168,8 @@ class Repository:
     def clone_repository(self) -> None:
         """Clone the app repository to a local working directory."""
         self.output.step("Cloning app repository")
-        self.git_repo = self.github.clone(
-            self.github_repository, tempfile.mkdtemp(prefix="repoupdater")
-        )
+        self.clone_dir = Path(tempfile.mkdtemp(prefix="repoupdater"))
+        self.git_repo = self.github.clone(self.github_repository, str(self.clone_dir))
         self.output.done("Cloned!")
 
     def generate_readme(self) -> None:
@@ -205,10 +206,16 @@ class Repository:
         self.output.done()
 
     def cleanup(self) -> None:
-        """Cleanup after you leave."""
-        if self.git_repo is None:
-            return
-
+        """Remove every temporary clone this run created."""
         self.output.step("Cleanup")
-        shutil.rmtree(self.git_repo.working_dir, ignore_errors=True)
+
+        for app in self.apps:
+            app.cleanup()
+
+        # Owned by us because we created it, so it goes even when the clone
+        # itself never finished and self.git_repo was left unset.
+        if self.clone_dir is not None:
+            shutil.rmtree(self.clone_dir, ignore_errors=True)
+            self.clone_dir = None
+
         self.output.done()
