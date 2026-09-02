@@ -6,27 +6,31 @@ Represents / handles all Home Assistant app specific logic
 
 from __future__ import annotations
 
+import contextlib
 import json
-import os
 import sys
 import tempfile
+from pathlib import Path
 from shutil import copyfile, copytree, rmtree
+from typing import TYPE_CHECKING, Any
 
 import click
 import crayons
 import emoji
 import semver
 import yaml
-from git import Repo
-from github.Commit import Commit
 from github.GithubException import GithubException, UnknownObjectException
-from github.GitRelease import GitRelease
-from github.Repository import Repository
 from jinja2 import BaseLoader, Environment
 
-from repositoryupdater.github import GitHub
+from .const import CHANNEL_BETA, CHANNEL_EDGE, CONFIG_FILENAMES
 
-from .const import CHANNEL_BETA, CHANNEL_EDGE
+if TYPE_CHECKING:
+    from git import Repo
+    from github.Commit import Commit
+    from github.GitRelease import GitRelease
+    from github.Repository import Repository
+
+    from repositoryupdater.github import GitHub
 
 
 class App:
@@ -65,7 +69,7 @@ class App:
         app_target: str,
         channel: str,
         updating: bool,
-    ):
+    ) -> None:
         """Initialize a new Home Assistant app object."""
         self.github = github
         self.repository_target = repository_target
@@ -81,9 +85,7 @@ class App:
         self.latest_release = None
         self.latest_commit = None
 
-        click.echo(
-            "Loading app information from: %s" % self.app_repository.html_url
-        )
+        click.echo(f"Loading app information from: {self.app_repository.html_url}")
 
         self.__load_current_info()
         if self.updating:
@@ -95,7 +97,17 @@ class App:
             else:
                 click.echo(crayons.green("This app is up to date."))
 
-    def clone_repository(self):
+    @property
+    def target_dir(self) -> Path:
+        """Return this app's directory inside the apps repository."""
+        return Path(self.repository.working_dir) / self.repository_target
+
+    @property
+    def source_dir(self) -> Path:
+        """Return this app's directory inside its own cloned repository."""
+        return Path(self.git_repo.working_dir) / self.app_target
+
+    def clone_repository(self) -> None:
         """Clone the app source to a local working directory."""
         click.echo("Cloning app git repository...", nl=False)
         self.git_repo = self.github.clone(
@@ -104,7 +116,7 @@ class App:
         self.git_repo.git.checkout(self.current_commit.sha)
         click.echo(crayons.green("Cloned!"))
 
-    def update(self):
+    def update(self) -> None:
         """Update this app inside the given app repository."""
         if not self.updating:
             click.echo(
@@ -123,30 +135,19 @@ class App:
         self.generate_readme()
         self.generate_app_changelog()
 
-    def __load_current_info(self):
+    def __load_current_info(self) -> bool | None:
         """Load current app version information and current config."""
-        config_files = ("config.json", "config.yaml", "config.yml")
-        for config_file in config_files:
-            if os.path.exists(
-                os.path.join(
-                    self.repository.working_dir, self.repository_target, config_file
-                )
-            ):
-                self.existing_config_filename = config_file
-                break
+        self.existing_config_filename = next(
+            (name for name in CONFIG_FILENAMES if (self.target_dir / name).is_file()),
+            None,
+        )
 
         if self.existing_config_filename is None:
-            click.echo("Current version: %s" % crayons.yellow("Not available"))
+            click.echo(f"Current version: {crayons.yellow('Not available')}")
             return False
 
-        with open(
-            os.path.join(
-                self.repository.working_dir,
-                self.repository_target,
-                self.existing_config_filename,
-            ),
-            "r",
-            encoding="utf8",
+        with (self.target_dir / self.existing_config_filename).open(
+            encoding="utf8"
         ) as f:
             current_config = (
                 json.load(f)
@@ -163,10 +164,8 @@ class App:
             self.archs = current_config["arch"]
 
         current_parsed_version = False
-        try:
+        with contextlib.suppress(ValueError):
             current_parsed_version = semver.parse(self.current_version)
-        except ValueError:
-            pass
 
         if current_parsed_version:
             try:
@@ -185,11 +184,11 @@ class App:
                 )
 
         click.echo(
-            "Current version: %s (%s)"
-            % (crayons.magenta(self.current_version), self.current_commit.sha[:7])
+            f"Current version: {crayons.magenta(self.current_version)} "
+            f"({self.current_commit.sha[:7]})"
         )
 
-    def __load_latest_info(self, channel: str):
+    def __load_latest_info(self, channel: str) -> None:
         """Determine latest available app version and config."""
         for release in self.app_repository.get_releases():
             self.latest_version = release.tag_name.lstrip("v")
@@ -215,7 +214,7 @@ class App:
                 self.latest_commit = last_commit
                 self.latest_is_release = False
 
-        config_files = ["config.json", "config.yaml", "config.yml"]
+        config_files = list(CONFIG_FILENAMES)
         # Ensure existing filename is at the start of the list
         if self.existing_config_filename is not None:
             config_files.insert(
@@ -227,7 +226,7 @@ class App:
         for config_file in config_files:
             try:
                 latest_config_file = self.app_repository.get_contents(
-                    os.path.join(self.app_target, config_file), self.latest_commit.sha
+                    f"{self.app_target}/{config_file}", self.latest_commit.sha
                 )
                 break
             except UnknownObjectException:
@@ -236,8 +235,7 @@ class App:
         if config_file is None or latest_config_file is None:
             click.echo(
                 crayons.red(
-                    "An error occurred while loading the remote app "
-                    "configuration file"
+                    "An error occurred while loading the remote app configuration file"
                 )
             )
             sys.exit(1)
@@ -256,11 +254,11 @@ class App:
             self.archs = latest_config["arch"]
 
         click.echo(
-            "Latest version: %s (%s)"
-            % (crayons.magenta(self.latest_version), self.latest_commit.sha[:7])
+            f"Latest version: {crayons.magenta(self.latest_version)} "
+            f"({self.latest_commit.sha[:7]})"
         )
 
-    def needs_update(self, force: bool):
+    def needs_update(self, force: bool) -> bool:
         """Determine whether or not there is app updates available."""
         return self.updating and (
             force
@@ -268,38 +266,24 @@ class App:
             or self.current_commit != self.latest_commit
         )
 
-    def ensure_app_dir(self):
-        """Ensure the app target directory exists."""
-        app_path = os.path.join(self.repository.working_dir, self.repository_target)
-        app_translations_path = os.path.join(app_path, "translations")
+    def ensure_app_dir(self) -> None:
+        """Ensure the app target directory and its translations exist."""
+        (self.target_dir / "translations").mkdir(parents=True, exist_ok=True)
 
-        if not os.path.exists(app_path):
-            os.mkdir(app_path)
-
-        if not os.path.exists(app_translations_path):
-            os.mkdir(app_translations_path)
-
-    def generate_app_config(self):
+    def generate_app_config(self) -> None:
         """Generate app configuration file."""
         click.echo("Generating app configuration...", nl=False)
 
-        config_files = ("config.json", "config.yaml", "config.yml")
-        config_file = None
-        for config_file in config_files:
-            if os.path.exists(
-                os.path.join(self.git_repo.working_dir, self.app_target, config_file)
-            ):
-                break
-            config_file = None
+        config_file = next(
+            (name for name in CONFIG_FILENAMES if (self.source_dir / name).is_file()),
+            None,
+        )
 
         if config_file is None:
             click.echo(crayons.red("Failed!"))
             sys.exit(1)
 
-        with open(
-            os.path.join(self.git_repo.working_dir, self.app_target, config_file),
-            encoding="utf8",
-        ) as f:
+        with (self.source_dir / config_file).open(encoding="utf8") as f:
             config = (
                 json.load(f) if config_file.endswith(".json") else yaml.safe_load(f)
             )
@@ -307,25 +291,10 @@ class App:
         config["version"] = self.current_version
         config["image"] = self.image
 
-        for old_config_file in config_files:
-            try:
-                os.unlink(
-                    os.path.join(
-                        self.repository.working_dir,
-                        self.repository_target,
-                        old_config_file,
-                    )
-                )
-            except:
-                pass
+        for old_config_file in CONFIG_FILENAMES:
+            (self.target_dir / old_config_file).unlink(missing_ok=True)
 
-        with open(
-            os.path.join(
-                self.repository.working_dir, self.repository_target, config_file
-            ),
-            "w",
-            encoding="utf8",
-        ) as outfile:
+        with (self.target_dir / config_file).open("w", encoding="utf8") as outfile:
             if config_file.endswith(".json"):
                 json.dump(
                     config,
@@ -339,7 +308,7 @@ class App:
 
         click.echo(crayons.green("Done"))
 
-    def generate_app_changelog(self):
+    def generate_app_changelog(self) -> None:
         """Generate app changelog."""
         click.echo("Generating app changelog...", nl=False)
         changelog = ""
@@ -349,26 +318,19 @@ class App:
             compare = self.app_repository.compare(
                 self.current_release.tag_name, self.current_commit.sha
             )
-            changelog = "# Changelog since %s\n" % self.current_release.tag_name
+            changelog = f"# Changelog since {self.current_release.tag_name}\n"
             for commit in reversed(compare.commits):
-                changelog += "- %s \n" % (commit.commit.message)
+                changelog += f"- {commit.commit.message} \n"
         else:
-            changelog += "- %s\n" % (self.current_commit.commit.message)
+            changelog += f"- {self.current_commit.commit.message}\n"
 
         changelog = emoji.emojize(changelog, language="alias")
 
-        with open(
-            os.path.join(
-                self.repository.working_dir, self.repository_target, "CHANGELOG.md"
-            ),
-            "w",
-            encoding="utf8",
-        ) as outfile:
-            outfile.write(changelog)
+        (self.target_dir / "CHANGELOG.md").write_text(changelog, encoding="utf8")
 
         click.echo(crayons.green("Done"))
 
-    def update_static_files(self):
+    def update_static_files(self) -> None:
         """Update the static app files within the repository."""
         self.update_static("logo.png")
         self.update_static("icon.png")
@@ -377,62 +339,51 @@ class App:
         self.update_static("apparmor.txt")
         self.update_static("translations")
 
-    def update_static(self, file):
+    def update_static(self, file: str) -> None:
         """Download latest static file/directory from app repository."""
         click.echo(f"Syncing app static {file}...", nl=False)
-        local_file = os.path.join(
-            self.repository.working_dir, self.repository_target, file
-        )
-        remote_file = os.path.join(self.git_repo.working_dir, self.app_target, file)
+        local_file = self.target_dir / file
+        remote_file = self.source_dir / file
 
-        if os.path.exists(remote_file) and os.path.isfile(remote_file):
+        if remote_file.is_file():
             copyfile(remote_file, local_file)
             click.echo(crayons.green("Done"))
-        elif os.path.exists(remote_file) and os.path.isdir(remote_file):
+        elif remote_file.is_dir():
             rmtree(local_file)
             copytree(remote_file, local_file)
             click.echo(crayons.green("Done"))
-        elif os.path.isfile(local_file):
-            os.remove(local_file)
+        elif local_file.is_file():
+            local_file.unlink()
             click.echo(crayons.yellow("Removed"))
         else:
             click.echo(crayons.blue("Skipping"))
 
-    def generate_readme(self):
+    def generate_readme(self) -> None:
         """Re-generate the app readme based on a template."""
         click.echo("Re-generating app README.md file...", nl=False)
 
-        app_file = os.path.join(
-            self.git_repo.working_dir, self.app_target, ".README.j2"
-        )
-        if not os.path.exists(app_file):
+        app_file = self.source_dir / ".README.j2"
+        if not app_file.is_file():
             click.echo(crayons.blue("Skipping"))
             return
 
-        local_file = os.path.join(
-            self.repository.working_dir, self.repository_target, "README.md"
-        )
-
-        data = self.get_template_data()
-
-        jinja = Environment(
+        # Autoescaping is off on purpose: these templates render Markdown.
+        jinja = Environment(  # noqa: S701
             loader=BaseLoader(),
             trim_blocks=True,
             extensions=["jinja2.ext.loopcontrols"],
         )
 
-        with open(local_file, "w", encoding="utf8") as outfile:
-            outfile.write(
-                jinja.from_string(open(app_file, encoding="utf8").read()).render(
-                    **data
-                )
-            )
+        readme = jinja.from_string(app_file.read_text(encoding="utf8")).render(
+            **self.get_template_data()
+        )
+        (self.target_dir / "README.md").write_text(readme, encoding="utf8")
 
         click.echo(crayons.green("Done"))
 
-    def get_template_data(self):
+    def get_template_data(self) -> dict[str, Any]:
         """Return a dictionary with app information."""
-        data = {}
+        data: dict[str, Any] = {}
         if not self.current_version:
             return data
 
@@ -452,7 +403,7 @@ class App:
 
         try:
             semver.parse(self.current_version)
-            data["version"] = "v%s" % self.current_version
+            data["version"] = f"v{self.current_version}"
         except ValueError:
             data["version"] = self.current_version
 
