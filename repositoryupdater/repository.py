@@ -5,48 +5,68 @@ Contains the apps repository representation / configuration
 and handles the automated maintenance / updating of it.
 """
 
+from __future__ import annotations
+
 import shutil
-import sys
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import click
-import crayons
 import yaml
-from git import Repo
 from github.GithubException import UnknownObjectException
-from github.Repository import Repository as GitHubRepository
 from jinja2 import Environment, FileSystemLoader
 
-from .app import App
-from .const import CHANNELS
-from .github import GitHub
+from .app import App, AppConfig
+from .const import APP_LIST_FILENAMES, CHANNELS
+from .exceptions import InvalidChannelError, RepositoryAppListNotFoundError
+
+if TYPE_CHECKING:
+    from git import Repo
+    from github.Repository import Repository as GitHubRepository
+
+    from .github import GitHub
+    from .output import Output
 
 
 class Repository:
     """Represents an Home Assistant apps repository."""
 
     apps: list[App]
-    github: GitHub
-    github_repository: GitHubRepository
-    git_repo: Repo
-    force: bool
-    channel: str
+    github_repository: GitHubRepository | None
+    git_repo: Repo | None
+    channel: str | None
 
-    def __init__(self, github: GitHub, repository: str, app: str, force: bool) -> None:
+    def __init__(
+        self,
+        github: GitHub,
+        repository: str,
+        app: str | None,
+        *,
+        force: bool,
+        output: Output,
+    ) -> None:
         """Initialize new app Repository object."""
         self.github = github
+        self.repository = repository
+        self.app_filter = app
         self.force = force
-        self.apps = []
+        self.output = output
 
-        click.echo(
-            f'Locating app repository "{crayons.yellow(repository)}"...', nl=False
+        self.apps = []
+        self.github_repository = None
+        self.git_repo = None
+        self.channel = None
+
+    def load(self) -> None:
+        """Locate the apps repository, clone it and load the apps it holds."""
+        self.output.step(
+            f'Locating app repository "{self.output.emphasis(self.repository)}"'
         )
-        self.github_repository = github.get_repo(repository)
-        click.echo(crayons.green("Found!"))
+        self.github_repository = self.github.get_repo(self.repository)
+        self.output.done("Found!")
 
         self.clone_repository()
-        self.load_repository(app)
+        self.load_apps()
 
     def update(self) -> None:
         """Update this repository using configuration and data gathered."""
@@ -54,28 +74,28 @@ class Repository:
         needs_push = self.commit_changes(":books: Updated README")
 
         for app in self.apps:
-            if app.needs_update(self.force):
-                click.echo(crayons.green("-" * 50, bold=True))
-                click.echo(crayons.green(f"Updating app {app.repository_target}"))
+            if app.needs_update(force=self.force):
+                self.output.divider()
+                self.output.success(f"Updating app {app.config.repository_target}")
                 needs_push = self.update_app(app) or needs_push
 
         if needs_push:
-            click.echo(crayons.green("-" * 50, bold=True))
-            click.echo("Pushing updates onto Git apps repository...", nl=False)
+            self.output.divider()
+            self.output.step("Pushing updates onto Git apps repository")
             self.git_repo.git.push()
-            click.echo(crayons.green("Done"))
+            self.output.done()
 
     def commit_changes(self, message: str) -> bool:
         """Commit current Repository changes."""
-        click.echo("Committing changes...", nl=False)
+        self.output.step("Committing changes")
 
         if not self.git_repo.is_dirty(untracked_files=True):
-            click.echo(crayons.yellow("Skipped, no changes."))
+            self.output.warning("Skipped, no changes.")
             return False
 
         self.git_repo.git.add(".")
         self.git_repo.git.commit("--no-gpg-sign", "-m", message)
-        click.echo(crayons.green("Done: ") + crayons.cyan(message))
+        self.output.done(f"Done: {message}")
         return True
 
     def update_app(self, app: App) -> bool:
@@ -92,87 +112,75 @@ class Repository:
 
         return self.commit_changes(message)
 
-    def load_repository(self, app: str) -> None:
+    def load_apps(self) -> None:
         """Load repository configuration from remote repository and apps."""
-        click.echo("Locating repository app list...", nl=False)
-        config = None
-        for config_file in (".apps.yml", ".addons.yml", ".hassio-addons.yml"):
-            try:
-                config = self.github_repository.get_contents(config_file)
-                break
-            except UnknownObjectException:
-                continue
-
-        if config is None:
-            click.echo(crayons.red("Failed!"))
-            click.echo(
-                crayons.red(
-                    "Repository does not contain an .apps.yml, "
-                    ".addons.yml, or .hassio-addons.yml file."
-                )
-            )
-            sys.exit(1)
-
-        config = yaml.safe_load(config.decoded_content)
-        click.echo(crayons.green("Loaded!"))
+        config = self._fetch_app_list()
 
         if config["channel"] not in CHANNELS:
-            click.echo(
-                crayons.red(
-                    f'Channel "{config["channel"]}" is not a valid channel identifier'
-                )
-            )
-            sys.exit(1)
+            raise InvalidChannelError(config["channel"])
 
         self.channel = config["channel"]
-        click.echo(f"Repository channel: {crayons.magenta(self.channel)}")
+        self.output.info(f"Repository channel: {self.output.highlight(self.channel)}")
 
-        if app:
-            click.echo(crayons.yellow(f'Only updating app "{app}" this run!'))
+        if self.app_filter:
+            self.output.warning(f'Only updating app "{self.app_filter}" this run!')
 
-        click.echo("Start loading repository apps:")
+        self.output.info("Start loading repository apps:")
         apps_config = config.get("apps", config.get("addons", {}))
         for target, app_config in apps_config.items():
-            click.echo(crayons.cyan("-" * 50, bold=True))
-            click.echo(crayons.cyan(f"Loading app {target}"))
-            self.apps.append(
-                App(
-                    self.github,
-                    self.git_repo,
-                    target,
-                    app_config["image"],
-                    self.github.get_repo(app_config["repository"]),
-                    app_config["target"],
-                    self.channel,
-                    (not app or app_config["repository"] == app or target == app),
-                )
+            self.output.section(f"Loading app {target}")
+            app = App(
+                self.github,
+                Path(self.git_repo.working_dir),
+                AppConfig.from_app_list(target, app_config, self.channel),
+                updating=self._is_selected(target, app_config["repository"]),
+                output=self.output,
             )
-        click.echo(crayons.cyan("-" * 50, bold=True))
-        click.echo("Done loading all repository apps")
+            app.load()
+            self.apps.append(app)
+
+        self.output.section("Done loading all repository apps")
+
+    def _fetch_app_list(self) -> dict:
+        """Fetch and parse the app list declared by the apps repository."""
+        self.output.step("Locating repository app list")
+
+        for config_file in APP_LIST_FILENAMES:
+            try:
+                contents = self.github_repository.get_contents(config_file)
+            except UnknownObjectException:
+                continue
+            app_list = yaml.safe_load(contents.decoded_content)
+            self.output.done("Loaded!")
+            return app_list
+
+        self.output.failed()
+        raise RepositoryAppListNotFoundError(APP_LIST_FILENAMES)
+
+    def _is_selected(self, target: str, repository: str) -> bool:
+        """Return whether an app is in scope for this run."""
+        if not self.app_filter:
+            return True
+        return self.app_filter in (target, repository)
 
     def clone_repository(self) -> None:
         """Clone the app repository to a local working directory."""
-        click.echo("Cloning app repository...", nl=False)
+        self.output.step("Cloning app repository")
         self.git_repo = self.github.clone(
             self.github_repository, tempfile.mkdtemp(prefix="repoupdater")
         )
-        click.echo(crayons.green("Cloned!"))
+        self.output.done("Cloned!")
 
     def generate_readme(self) -> None:
         """Re-generate the repository readme based on a template."""
-        click.echo("Re-generating app repository README.md file...", nl=False)
+        self.output.step("Re-generating app repository README.md file")
 
         working_dir = Path(self.git_repo.working_dir)
         if not (working_dir / ".README.j2").is_file():
-            click.echo(crayons.blue("skipping"))
+            self.output.skipped()
             return
 
-        app_data = []
-        for app in self.apps:
-            data = app.get_template_data()
-            if data:
-                app_data.append(app.get_template_data())
-
+        app_data = [data for app in self.apps if (data := app.get_template_data())]
         app_data = sorted(app_data, key=lambda x: x["name"])
 
         # Autoescaping is off on purpose: these templates render Markdown.
@@ -194,10 +202,13 @@ class Repository:
         )
         (working_dir / "README.md").write_text(readme, encoding="utf8")
 
-        click.echo(crayons.green("Done"))
+        self.output.done()
 
     def cleanup(self) -> None:
         """Cleanup after you leave."""
-        click.echo("Cleanup...", nl=False)
-        shutil.rmtree(self.git_repo.working_dir, True)
-        click.echo(crayons.green("Done"))
+        if self.git_repo is None:
+            return
+
+        self.output.step("Cleanup")
+        shutil.rmtree(self.git_repo.working_dir, ignore_errors=True)
+        self.output.done()
