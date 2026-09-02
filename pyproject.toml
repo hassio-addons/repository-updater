@@ -31,12 +31,10 @@ classifiers = [
 ]
 dependencies = [
   "click==8.5.0",
-  "crayons==0.4.0",
   "emoji==2.15.0",
   "GitPython==3.1.61",
   "Jinja2==3.1.6",
   "PyGithub==2.10.0",
-  "python-dateutil==2.9.0.post0",
   "PyYAML==6.0.3",
   "semver==3.0.4",
 ]
@@ -68,15 +66,6 @@ ignore = [
   "ISC001",  # single-line-implicit-string-concatenation
 
   "CPY001",  # No copyright headers, the LICENSE file covers it.
-
-  # Resolved by the upcoming refactor towards raising exceptions instead
-  # of exiting, and splitting output out of the business logic.
-  "C901",    # complex-structure
-  "FBT001",  # boolean-type-hint-positional-argument
-  "FBT003",  # boolean-positional-value-in-call
-  "PLR0913", # too-many-arguments
-  "PLR0917", # too-many-positional-arguments
-  "RET503",  # implicit-return
 ]
 
 [tool.ruff.lint.pydocstyle]

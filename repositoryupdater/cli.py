@@ -11,10 +11,11 @@ from os import environ
 from sys import argv
 
 import click
-import crayons
 
 from . import APP_FULL_NAME, APP_VERSION
+from .exceptions import RepositoryUpdaterError
 from .github import GitHub
+from .output import Output
 from .repository import Repository
 
 
@@ -42,22 +43,32 @@ from .repository import Repository
 @click.option("--force", is_flag=True, help="Force an update of the app repository")
 @click.version_option(APP_VERSION, prog_name=APP_FULL_NAME)
 def repository_updater(
+    *,
     token: str,
     repository: str,
     app: str | None,
     force: bool,
 ) -> None:
     """Home Assistant Community Apps Repository Updater."""
-    click.echo(crayons.blue(APP_FULL_NAME, bold=True))
-    click.echo(crayons.blue("-" * 51, bold=True))
+    output = Output()
+    output.title(APP_FULL_NAME)
 
-    github = GitHub(token)
-    user = crayons.yellow(github.get_user().name, bold=True)
-    click.echo(f"Authenticated with GitHub as {user}")
+    try:
+        github = GitHub(token)
+        output.info(
+            f"Authenticated with GitHub as {output.emphasis(github.get_user().name)}"
+        )
 
-    apps_repository = Repository(github, repository, app, force)
-    apps_repository.update()
-    apps_repository.cleanup()
+        apps_repository = Repository(
+            github, repository, app, force=force, output=output
+        )
+        try:
+            apps_repository.load()
+            apps_repository.update()
+        finally:
+            apps_repository.cleanup()
+    except RepositoryUpdaterError as err:
+        raise click.ClickException(str(err)) from err
 
 
 def git_askpass() -> None:

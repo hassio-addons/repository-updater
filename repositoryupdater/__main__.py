@@ -1,6 +1,6 @@
 """Repository Updater bootstrap."""
 
-from . import cli
+from .cli import repository_updater
 
 if __name__ == "__main__":
-    cli.repository_updater(None, None, None, None)
+    repository_updater()
