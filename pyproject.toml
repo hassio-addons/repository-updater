@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repository-updater"
+version = "2.0.1"
+description = "Home Assistant Community Apps Repository Updater"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE.md"]
+requires-python = ">=3.11"
+authors = [{ name = "Franck Nijhof", email = "opensource@frenck.dev" }]
+keywords = [
+  "apps",
+  "frenck",
+  "home assistant",
+  "home-assistant",
+  "repository",
+]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Utilities",
+]
+dependencies = [
+  "click==8.5.0",
+  "crayons==0.4.0",
+  "emoji==2.15.0",
+  "GitPython==3.1.61",
+  "Jinja2==3.1.6",
+  "PyGithub==2.10.0",
+  "python-dateutil==2.9.0.post0",
+  "PyYAML==6.0.3",
+  "semver==3.0.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/hassio-addons/repository-updater"
+Source = "https://github.com/hassio-addons/repository-updater"
+Issues = "https://github.com/hassio-addons/repository-updater/issues"
+
+[project.scripts]
+repository-updater = "repositoryupdater.cli:repository_updater"
+repository-updater-git-askpass = "repositoryupdater.cli:git_askpass"
+
+[dependency-groups]
+dev = ["ruff==0.16.5"]
+
+[tool.setuptools.packages.find]
+include = ["repositoryupdater*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  # Conflicts with the formatter, which handles both already.
+  "COM812",  # missing-trailing-comma
+  "ISC001",  # single-line-implicit-string-concatenation
+
+  "CPY001",  # No copyright headers, the LICENSE file covers it.
+
+  # Resolved by the upcoming refactor towards raising exceptions instead
+  # of exiting, and splitting output out of the business logic.
+  "C901",    # complex-structure
+  "FBT001",  # boolean-type-hint-positional-argument
+  "FBT003",  # boolean-positional-value-in-call
+  "PLR0913", # too-many-arguments
+  "PLR0917", # too-many-positional-arguments
+  "RET503",  # implicit-return
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"

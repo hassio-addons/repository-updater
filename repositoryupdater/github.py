@@ -15,15 +15,15 @@ class GitHub(PyGitHub):
 
     token: str
 
-    def __init__(self, login_or_token=None):
+    def __init__(self, login_or_token: str | None = None) -> None:
         """Initialize a new GitHub object."""
         super().__init__(
             login_or_token=login_or_token,
         )
         self.token = login_or_token
 
-    def clone(self, repository: Repository, destination):
-        """Clones a GitHub repository and returns a Git object."""
+    def clone(self, repository: Repository, destination: str) -> Repo:
+        """Clone a GitHub repository and return a Git object."""
         environ = {
             "GIT_ASKPASS": "repository-updater-git-askpass",
             "GIT_USERNAME": self.token,

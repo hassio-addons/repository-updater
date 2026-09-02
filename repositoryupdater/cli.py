@@ -3,6 +3,9 @@ CLI Module.
 
 Handles CLI for the Repository Updater
 """
+
+from __future__ import annotations
+
 import sys
 from os import environ
 from sys import argv
@@ -38,21 +41,26 @@ from .repository import Repository
 )
 @click.option("--force", is_flag=True, help="Force an update of the app repository")
 @click.version_option(APP_VERSION, prog_name=APP_FULL_NAME)
-def repository_updater(token, repository, app, force):
+def repository_updater(
+    token: str,
+    repository: str,
+    app: str | None,
+    force: bool,
+) -> None:
     """Home Assistant Community Apps Repository Updater."""
     click.echo(crayons.blue(APP_FULL_NAME, bold=True))
     click.echo(crayons.blue("-" * 51, bold=True))
+
     github = GitHub(token)
-    click.echo(
-        "Authenticated with GitHub as %s"
-        % crayons.yellow(github.get_user().name, bold=True)
-    )
-    repository = Repository(github, repository, app, force)
-    repository.update()
-    repository.cleanup()
+    user = crayons.yellow(github.get_user().name, bold=True)
+    click.echo(f"Authenticated with GitHub as {user}")
+
+    apps_repository = Repository(github, repository, app, force)
+    apps_repository.update()
+    apps_repository.cleanup()
 
 
-def git_askpass():
+def git_askpass() -> None:
     """
     Git credentials helper.
 
@@ -61,11 +69,11 @@ def git_askpass():
     intended to be called by Git via GIT_ASKPASS.
     """
     if argv[1] == "Username for 'https://github.com': ":
-        print(environ["GIT_USERNAME"])
+        print(environ["GIT_USERNAME"])  # noqa: T201
         sys.exit()
 
-    if argv[1] == "Password for 'https://" "%(GIT_USERNAME)s@github.com': " % environ:
-        print(environ["GIT_PASSWORD"])
+    if argv[1] == f"Password for 'https://{environ['GIT_USERNAME']}@github.com': ":
+        print(environ["GIT_PASSWORD"])  # noqa: T201
         sys.exit()
 
     sys.exit(1)

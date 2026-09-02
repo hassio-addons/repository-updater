@@ -10,9 +10,9 @@ Please note, this program cannot be used with the general documented
 Home Assistant app repository approach.
 """
 
-APP_NAME = "repository-updater"
+from importlib.metadata import version
+
 APP_FULL_NAME = "Home Assistant Community Apps Repository Updater"
-APP_VERSION = "2.0.1"
-APP_DESCRIPTION = __doc__
+APP_VERSION = version("repository-updater")
 
 __version__ = APP_VERSION

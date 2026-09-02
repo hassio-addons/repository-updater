@@ -8,12 +8,32 @@ on:
   workflow_dispatch:
 
 env:
-  DEFAULT_PYTHON: "3.11"
+  DEFAULT_PYTHON: "3.14"
 
 permissions:
   contents: read
 
 jobs:
+  ruff:
+    name: Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: 🏗 Set up Python ${{ env.DEFAULT_PYTHON }}
+        id: python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON }}
+      - name: 🏗 Install dependencies
+        run: pip install --group dev
+      - name: 🚀 Run ruff check
+        run: ruff check --output-format=github .
+      - name: 🚀 Run ruff format
+        run: ruff format --check --diff .
+
   zizmor:
     name: zizmor
     runs-on: ubuntu-latest
