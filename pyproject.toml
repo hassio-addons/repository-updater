@@ -36,7 +36,7 @@ dependencies = [
   "Jinja2==3.1.6",
   "PyGithub==2.10.0",
   "PyYAML==6.0.3",
-  "semver==3.0.4",
+  "semver==3.1.0",
 ]
 
 [project.urls]
