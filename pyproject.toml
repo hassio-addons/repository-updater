@@ -31,7 +31,7 @@ classifiers = [
 ]
 dependencies = [
   "click==8.5.0",
-  "emoji==2.15.0",
+  "emoji==2.16.0",
   "GitPython==3.1.62",
   "Jinja2==3.1.6",
   "PyGithub==2.10.0",
