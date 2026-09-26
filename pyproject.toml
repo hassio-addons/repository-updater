@@ -49,7 +49,7 @@ repository-updater = "repositoryupdater.cli:repository_updater"
 repository-updater-git-askpass = "repositoryupdater.cli:git_askpass"
 
 [dependency-groups]
-dev = ["ruff==0.16.7"]
+dev = ["ruff==0.16.8"]
 
 [tool.setuptools.packages.find]
 include = ["repositoryupdater*"]
