@@ -19,9 +19,14 @@ from .output import Output
 from .repository import Repository
 
 
+# Every option can also come from the environment. The INPUT_* names are what
+# GitHub hands a Docker action for its inputs; GitHub sets an input it was not
+# given to an empty string, and Click skips those and tries the next name.
 @click.command()
 @click.option(
     "--token",
+    envvar=["INPUT_TOKEN", "GITHUB_TOKEN"],
+    show_envvar=True,
     hide_input=True,
     prompt="GitHub access token",
     help="GitHub access token",
@@ -29,6 +34,8 @@ from .repository import Repository
 )
 @click.option(
     "--repository",
+    envvar=["INPUT_REPOSITORY", "GITHUB_REPOSITORY"],
+    show_envvar=True,
     prompt="Home Assistant Apps repository to update",
     help="The Home Assistant Apps repository to update",
     metavar="<orgname/reponame>",
@@ -37,10 +44,18 @@ from .repository import Repository
     "--app",
     "--addon",
     "app",
+    envvar=["INPUT_APP", "INPUT_ADDON"],
+    show_envvar=True,
     help="Update a single/specific app",
     metavar="<TARGET>",
 )
-@click.option("--force", is_flag=True, help="Force an update of the app repository")
+@click.option(
+    "--force",
+    is_flag=True,
+    envvar="INPUT_FORCE",
+    show_envvar=True,
+    help="Force an update of the app repository",
+)
 @click.version_option(APP_VERSION, prog_name=APP_FULL_NAME)
 def repository_updater(
     *,
