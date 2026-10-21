@@ -102,6 +102,9 @@ show_missing = true
 # test on the current sync code; this goes up to 95 with the async rewrite.
 fail_under = 85
 
+[tool.codespell]
+ignore-words-list = "hass"
+
 [tool.ty.environment]
 python-version = "3.12"
 
