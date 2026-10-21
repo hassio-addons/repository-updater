@@ -4,6 +4,8 @@ name: Linting
 # yamllint disable-line rule:truthy
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -12,6 +14,10 @@ env:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ruff:
@@ -33,6 +39,46 @@ jobs:
         run: uv run --no-sync ruff check --output-format=github .
       - name: 🚀 Run ruff format
         run: uv run --no-sync ruff format --check --diff .
+
+  prek-hooks:
+    name: prek-hooks
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 🏗 Set up uv and Python ${{ env.DEFAULT_PYTHON }}
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+          python-version: ${{ env.DEFAULT_PYTHON }}
+      - name: 🏗 Install dependencies
+        run: uv sync --locked --group dev
+      - name: 🚀 Check Python AST
+        run: uv run --no-sync prek run check-ast --all-files
+      - name: 🚀 Check for case conflicts
+        run: uv run --no-sync prek run check-case-conflict --all-files
+      - name: 🚀 Check docstring is first
+        run: uv run --no-sync prek run check-docstring-first --all-files
+      - name: 🚀 Check that executables have shebangs
+        run: uv run --no-sync prek run check-executables-have-shebangs --all-files
+      - name: 🚀 Check JSON files
+        run: uv run --no-sync prek run check-json --all-files
+      - name: 🚀 Check for merge conflicts
+        run: uv run --no-sync prek run check-merge-conflict --all-files
+      - name: 🚀 Check for broken symlinks
+        run: uv run --no-sync prek run check-symlinks --all-files
+      - name: 🚀 Check TOML files
+        run: uv run --no-sync prek run check-toml --all-files
+      - name: 🚀 Check YAML files
+        run: uv run --no-sync prek run check-yaml --all-files
+      - name: 🚀 Detect Private Keys
+        run: uv run --no-sync prek run detect-private-key --all-files
+      - name: 🚀 Check End of Files
+        run: uv run --no-sync prek run end-of-file-fixer --all-files
+      - name: 🚀 Trim Trailing Whitespace
+        run: uv run --no-sync prek run trailing-whitespace --all-files
 
   zizmor:
     name: zizmor

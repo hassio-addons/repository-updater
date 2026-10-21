@@ -1,0 +1,100 @@
+---
+# Hooks for prek (https://prek.j178.dev). Run them all with:
+#   uv run prek run --all-files
+#
+# Every hook is local and runs through uv, so its version comes from uv.lock
+# and cannot drift from a separate `rev:` pin.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: 🐶 Ruff Linter
+        language: system
+        types: [python]
+        entry: uv run --no-sync ruff check --fix
+        require_serial: true
+      - id: ruff-format
+        name: 🐶 Ruff Formatter
+        language: system
+        types: [python]
+        entry: uv run --no-sync ruff format
+        require_serial: true
+      - id: check-ast
+        name: 🐍 Check Python AST
+        language: system
+        types: [python]
+        entry: uv run --no-sync check-ast
+      - id: check-case-conflict
+        name: 🔠 Check for case conflicts
+        language: system
+        entry: uv run --no-sync check-case-conflict
+      - id: check-docstring-first
+        name: ℹ️  Check docstring is first
+        language: system
+        types: [python]
+        entry: uv run --no-sync check-docstring-first
+      - id: check-executables-have-shebangs
+        name: 🧐 Check that executables have shebangs
+        language: system
+        types: [text, executable]
+        entry: uv run --no-sync check-executables-have-shebangs
+      - id: check-json
+        name: ｛ Check JSON files
+        language: system
+        types: [json]
+        entry: uv run --no-sync check-json
+      - id: check-merge-conflict
+        name: 💥 Check for merge conflicts
+        language: system
+        types: [text]
+        entry: uv run --no-sync check-merge-conflict
+      - id: check-symlinks
+        name: 🔗 Check for broken symlinks
+        language: system
+        types: [symlink]
+        entry: uv run --no-sync check-symlinks
+      - id: check-toml
+        name: ✅ Check TOML files
+        language: system
+        types: [toml]
+        entry: uv run --no-sync check-toml
+      - id: check-yaml
+        name: ✅ Check YAML files
+        language: system
+        types: [yaml]
+        entry: uv run --no-sync check-yaml
+      - id: detect-private-key
+        name: 🕵️  Detect Private Keys
+        language: system
+        types: [text]
+        entry: uv run --no-sync detect-private-key
+      - id: end-of-file-fixer
+        name: ⮐  Fix End of Files
+        language: system
+        types: [text]
+        entry: uv run --no-sync end-of-file-fixer
+      - id: no-commit-to-branch
+        name: 🛑 Don't commit to main branch
+        language: system
+        entry: uv run --no-sync no-commit-to-branch
+        pass_filenames: false
+        always_run: true
+        args:
+          - --branch=main
+      - id: trailing-whitespace
+        name: ✄  Trim Trailing Whitespace
+        language: system
+        types: [text]
+        entry: uv run --no-sync trailing-whitespace-fixer
+      - id: uv-lock
+        name: 🔒 Check uv.lock is up to date
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        entry: uv lock --check
+        pass_filenames: false
+      - id: zizmor
+        name: 🌈 Check GitHub Actions workflows with zizmor
+        language: system
+        types: [yaml]
+        files: ^\.github/workflows/
+        entry: uv run --no-sync zizmor

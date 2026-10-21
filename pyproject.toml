@@ -56,6 +56,8 @@ repository-updater-git-askpass = "repositoryupdater.cli:git_askpass"
 # Pinned exactly for reproducible local and CI runs. CI installs this group
 # with `uv sync`, so the versions live here and not in the workflows.
 dev = [
+  "pre-commit-hooks==6.0.0",
+  "prek==0.5.7",
   "ruff==0.17.1",
   "zizmor==1.31.1",
 ]
