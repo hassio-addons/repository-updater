@@ -50,7 +50,8 @@ STATIC_FILES = (
     "translations",
 )
 
-VERSION_HEADING = re.compile(r"^#+ v?\d+(?:\.\d+)*\S*$", re.MULTILINE)
+# Version heading of a changelog section, e.g. "## 1.2.0" or "## v1.2.0"
+VERSION_HEADING = re.compile(r"^## v?\d", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -412,21 +413,18 @@ class App:
             else ""
         )
 
-        # Keep a title like "# Changelog" above the newest version
-        title = ""
-        if previous.startswith("# "):
-            title, _, previous = previous.partition("\n")
-            title += "\n\n"
-            previous = previous.lstrip("\n")
+        # Insert above the newest version, below any title or introduction
+        newest = VERSION_HEADING.search(previous)
+        split = newest.start() if newest else 0
+        intro, older = previous[:split], previous[split:]
 
         # Replace the section of this version on a rerun or a forced update
         heading = f"## {self.current_version}"
-        if previous.startswith(f"{heading}\n"):
-            next_heading = VERSION_HEADING.search(previous, len(heading))
-            previous = previous[next_heading.start() :] if next_heading else ""
+        if older.startswith(f"{heading}\n"):
+            next_heading = VERSION_HEADING.search(older, len(heading))
+            older = older[next_heading.start() :] if next_heading else ""
 
-        section = f"{heading}\n\n{notes.strip()}\n\n"
-        return f"{title}{section}{previous}".rstrip() + "\n"
+        return f"{intro}{heading}\n\n{notes.strip()}\n\n{older}".rstrip() + "\n"
 
     def update_static_files(self) -> None:
         """Update the static app files within the repository."""

@@ -173,9 +173,9 @@ apps:
   ...
 ```
 
-Each release then adds its notes under a `## <version>` heading on top of the
-existing `CHANGELOG.md`, below a title like `# Changelog` if the file starts
-with one. Home Assistant uses these headings to show the
+Each release then adds its notes under a `## <version>` heading above the
+newest version in `CHANGELOG.md`. A title like `# Changelog` and any
+introduction stay on top. Home Assistant uses these headings to show the
 changes between the installed and the new version. Edge updates without a
 release still replace the file.
 
