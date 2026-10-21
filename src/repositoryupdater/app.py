@@ -6,7 +6,6 @@ Represents / handles all Home Assistant app specific logic
 
 from __future__ import annotations
 
-import contextlib
 import json
 import tempfile
 from dataclasses import dataclass
@@ -231,11 +230,7 @@ class App:
         self._apply_config(current_config)
         self.current_version = current_config["version"]
 
-        current_parsed_version = False
-        with contextlib.suppress(ValueError):
-            current_parsed_version = semver.parse(self.current_version)
-
-        if current_parsed_version:
+        if semver.Version.is_valid(self.current_version):
             try:
                 ref = self.app_repository.get_git_ref("tags/" + self.current_version)
             except UnknownObjectException:
@@ -480,10 +475,9 @@ class App:
         for arch in self.archs:
             data["images"][arch] = self.config.image.replace("{arch}", arch)
 
-        try:
-            semver.parse(self.current_version)
+        if semver.Version.is_valid(self.current_version):
             data["version"] = f"v{self.current_version}"
-        except ValueError:
+        else:
             data["version"] = self.current_version
 
         data["commit"] = self.current_commit.sha

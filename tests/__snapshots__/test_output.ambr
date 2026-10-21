@@ -1,0 +1,17 @@
+# serializer version: 1
+# name: test_output
+  '''
+  Repository Updater
+  ---------------------------------------------------
+  --------------------------------------------------
+  Loading app example
+  Current version: 1.2.0
+  Cloning app repository...Cloned!
+  Re-generating README.md...Skipping
+  Committing changes...Failed!
+  This app has an update waiting to be published!
+  --------------------------------------------------
+  Updating app example
+  
+  '''
+# ---
