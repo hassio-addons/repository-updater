@@ -25,6 +25,10 @@ inputs:
     default: "false"
     required: false
 
+# The image of this very release, so the action never builds anything when
+# it runs. The release workflow refuses to publish when this does not match
+# the version being released. GitHub hands the inputs over as INPUT_*
+# environment variables, which the CLI reads.
 runs:
   using: "docker"
-  image: "action/Dockerfile"
+  image: "docker://ghcr.io/hassio-addons/repository-updater:2.0.2"

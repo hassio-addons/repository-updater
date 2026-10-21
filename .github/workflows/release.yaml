@@ -52,6 +52,17 @@ jobs:
           version="${version#v}"
           uv version --no-sync "${version}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
+      # The action runs the image of its own release; catch a release that
+      # forgot to point action.yaml at it before anything gets published.
+      - name: 🔍 Check the action uses this release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          expected="  image: \"docker://${IMAGE}:${VERSION}\""
+          if ! grep --quiet --fixed-strings --line-regexp "${expected}" action.yaml; then
+            echo "::error file=action.yaml::action.yaml must use docker://${IMAGE}:${VERSION}"
+            exit 1
+          fi
       - name: 🏗 Build package
         run: uv build
       - name: 🧭 Locate the built wheel
