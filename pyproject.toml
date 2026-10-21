@@ -1,6 +1,8 @@
 [build-system]
-requires = ["setuptools>=84.0.0"]
-build-backend = "setuptools.build_meta"
+# Pinned to a major range so a future Hatchling release cannot silently change
+# how the package is built on a publish day.
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
 
 [project]
 name = "repository-updater"
@@ -9,7 +11,7 @@ description = "Home Assistant Community Apps Repository Updater"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE.md"]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 authors = [{ name = "Franck Nijhof", email = "opensource@frenck.dev" }]
 keywords = [
   "apps",
@@ -22,21 +24,23 @@ classifiers = [
   "Environment :: Console",
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Build Tools",
   "Topic :: Utilities",
+  "Typing :: Typed",
 ]
+# Ranges, not pins: people install this with pip next to other things. The
+# exact versions CI and the container use live in uv.lock.
 dependencies = [
-  "click==8.5.0",
-  "emoji==2.16.0",
-  "GitPython==3.2.1",
-  "Jinja2==3.1.6",
-  "PyGithub==2.10.0",
-  "PyYAML==6.0.3",
-  "semver==3.1.0",
+  "click>=8.5.0,<9",
+  "emoji>=2.16.0,<3",
+  "GitPython>=3.2.1,<4",
+  "Jinja2>=3.1.6,<4",
+  "PyGithub>=2.10.0,<3",
+  "PyYAML>=6.0.3,<7",
+  "semver>=3.1.0,<4",
 ]
 
 [project.urls]
@@ -49,13 +53,28 @@ repository-updater = "repositoryupdater.cli:repository_updater"
 repository-updater-git-askpass = "repositoryupdater.cli:git_askpass"
 
 [dependency-groups]
-dev = ["ruff==0.17.1"]
+# Pinned exactly for reproducible local and CI runs. CI installs this group
+# with `uv sync`, so the versions live here and not in the workflows.
+dev = [
+  "ruff==0.17.1",
+  "zizmor==1.31.1",
+]
 
-[tool.setuptools.packages.find]
-include = ["repositoryupdater*"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/repositoryupdater"]
+
+# The sdist is explicit so its contents are auditable, rather than relying on
+# Hatchling's default file selection.
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/repositoryupdater",
+  "pyproject.toml",
+  "README.md",
+  "LICENSE.md",
+]
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 88
 
 [tool.ruff.lint]
