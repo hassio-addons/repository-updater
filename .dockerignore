@@ -1,0 +1,5 @@
+# Only what the Dockerfile mounts goes into the build context.
+*
+!dist/*.whl
+!pyproject.toml
+!uv.lock
