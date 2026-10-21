@@ -109,6 +109,12 @@ repos:
         language: system
         types: [yaml]
         entry: uv run --no-sync yamllint
+      - id: actionlint
+        name: 🎬 Check GitHub Actions workflows with actionlint
+        language: system
+        types: [yaml]
+        files: ^\.github/workflows/
+        entry: uv run --no-sync actionlint
       - id: zizmor
         name: 🌈 Check GitHub Actions workflows with zizmor
         language: system
