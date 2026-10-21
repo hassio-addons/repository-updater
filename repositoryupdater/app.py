@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import re
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,7 +21,13 @@ import yaml
 from github.GithubException import GithubException, UnknownObjectException
 from jinja2 import BaseLoader, Environment
 
-from .const import CHANNEL_BETA, CHANNEL_EDGE, CONFIG_FILENAMES, DEFAULT_ARCHS
+from .const import (
+    CHANGELOG_PREPEND,
+    CHANNEL_BETA,
+    CHANNEL_EDGE,
+    CONFIG_FILENAMES,
+    DEFAULT_ARCHS,
+)
 from .exceptions import AppConfigNotFoundError, AppNotUpdatingError
 
 if TYPE_CHECKING:
@@ -43,6 +50,8 @@ STATIC_FILES = (
     "translations",
 )
 
+VERSION_HEADING = re.compile(r"^#+ v?\d+(?:\.\d+)*\S*$", re.MULTILINE)
+
 
 @dataclass(frozen=True)
 class AppConfig:
@@ -56,6 +65,8 @@ class AppConfig:
     # Directory holding this app inside its own repository.
     app_target: str
     channel: str
+    # How a release updates CHANGELOG.md, one of CHANGELOG_MODES.
+    changelog: str
 
     @classmethod
     def from_app_list(
@@ -63,6 +74,7 @@ class AppConfig:
         target: str,
         config: dict[str, Any],
         channel: str,
+        changelog: str,
     ) -> AppConfig:
         """Create configuration from a single entry in a repository app list."""
         return cls(
@@ -71,6 +83,7 @@ class AppConfig:
             repository=config["repository"],
             app_target=config["target"],
             channel=channel,
+            changelog=changelog,
         )
 
 
@@ -383,9 +396,37 @@ class App:
 
         changelog = emoji.emojize(changelog, language="alias")
 
-        (self.target_dir / "CHANGELOG.md").write_text(changelog, encoding="utf8")
+        changelog_file = self.target_dir / "CHANGELOG.md"
+        if self.latest_is_release and self.config.changelog == CHANGELOG_PREPEND:
+            changelog = self._prepend_release_notes(changelog, changelog_file)
+
+        changelog_file.write_text(changelog, encoding="utf8")
 
         self.output.done()
+
+    def _prepend_release_notes(self, notes: str, changelog_file: Path) -> str:
+        """Return the existing changelog with the release notes on top."""
+        previous = (
+            changelog_file.read_text(encoding="utf8")
+            if changelog_file.is_file()
+            else ""
+        )
+
+        # Keep a title like "# Changelog" above the newest version
+        title = ""
+        if previous.startswith("# "):
+            title, _, previous = previous.partition("\n")
+            title += "\n\n"
+            previous = previous.lstrip("\n")
+
+        # Replace the section of this version on a rerun or a forced update
+        heading = f"## {self.current_version}"
+        if previous.startswith(f"{heading}\n"):
+            next_heading = VERSION_HEADING.search(previous, len(heading))
+            previous = previous[next_heading.start() :] if next_heading else ""
+
+        section = f"{heading}\n\n{notes.strip()}\n\n"
+        return f"{title}{section}{previous}".rstrip() + "\n"
 
     def update_static_files(self) -> None:
         """Update the static app files within the repository."""

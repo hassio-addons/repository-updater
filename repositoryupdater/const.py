@@ -5,6 +5,11 @@ CHANNEL_BETA = "beta"
 CHANNEL_EDGE = "edge"
 CHANNELS = [CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_EDGE]
 
+# How a release updates the app's CHANGELOG.md in the apps repository.
+CHANGELOG_REPLACE = "replace"
+CHANGELOG_PREPEND = "prepend"
+CHANGELOG_MODES = [CHANGELOG_REPLACE, CHANGELOG_PREPEND]
+
 # App configuration files, in the order they are looked up.
 CONFIG_FILENAMES = ("config.json", "config.yaml", "config.yml")
 

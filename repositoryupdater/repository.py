@@ -17,8 +17,12 @@ from github.GithubException import UnknownObjectException
 from jinja2 import Environment, FileSystemLoader
 
 from .app import App, AppConfig
-from .const import APP_LIST_FILENAMES, CHANNELS
-from .exceptions import InvalidChannelError, RepositoryAppListNotFoundError
+from .const import APP_LIST_FILENAMES, CHANGELOG_MODES, CHANGELOG_REPLACE, CHANNELS
+from .exceptions import (
+    InvalidChangelogModeError,
+    InvalidChannelError,
+    RepositoryAppListNotFoundError,
+)
 
 if TYPE_CHECKING:
     from git import Repo
@@ -124,6 +128,10 @@ class Repository:
         self.channel = config["channel"]
         self.output.info(f"Repository channel: {self.output.highlight(self.channel)}")
 
+        changelog = config.get("changelog", CHANGELOG_REPLACE)
+        if changelog not in CHANGELOG_MODES:
+            raise InvalidChangelogModeError(changelog)
+
         if self.app_filter:
             self.output.warning(f'Only updating app "{self.app_filter}" this run!')
 
@@ -134,7 +142,7 @@ class Repository:
             app = App(
                 self.github,
                 Path(self.git_repo.working_dir),
-                AppConfig.from_app_list(target, app_config, self.channel),
+                AppConfig.from_app_list(target, app_config, self.channel, changelog),
                 updating=self._is_selected(target, app_config["repository"]),
                 output=self.output,
             )

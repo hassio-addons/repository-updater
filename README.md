@@ -162,6 +162,23 @@ or the GitHub Container Registry for this app. `{arch}` can be used as a
 placeholder for the architecture and is automatically replaced internally by
 the Repository Updater.
 
+By default, each release replaces the app's `CHANGELOG.md` with its release
+notes. Set `changelog: prepend` at the top level of `.apps.yml` to keep the
+earlier entries instead:
+
+```yaml
+channel: stable
+changelog: prepend
+apps:
+  ...
+```
+
+Each release then adds its notes under a `## <version>` heading on top of the
+existing `CHANGELOG.md`, below a title like `# Changelog` if the file starts
+with one. Home Assistant uses these headings to show the
+changes between the installed and the new version. Edge updates without a
+release still replace the file.
+
 ## Apps Repository README template
 
 It is nice to have an up to date `README.md` file in your apps repository,

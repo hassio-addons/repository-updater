@@ -36,6 +36,14 @@ class InvalidChannelError(RepositoryUpdaterError):
         super().__init__(f'Channel "{channel}" is not a valid channel identifier')
 
 
+class InvalidChangelogModeError(RepositoryUpdaterError):
+    """Raised when the apps repository declares an unknown changelog mode."""
+
+    def __init__(self, mode: str) -> None:
+        """Initialize with the changelog mode that was declared."""
+        super().__init__(f'Changelog mode "{mode}" is not a valid changelog mode')
+
+
 class AppConfigNotFoundError(RepositoryUpdaterError):
     """Raised when an app has no configuration file where one is expected."""
 
