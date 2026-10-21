@@ -1,7 +1,7 @@
 [build-system]
 # Pinned to a major range so a future Hatchling release cannot silently change
 # how the package is built on a publish day.
-requires = ["hatchling>=1.27,<2"]
+requires = ["hatchling>=1.32.4,<2"]
 build-backend = "hatchling.build"
 
 [project]
