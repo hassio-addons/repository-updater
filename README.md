@@ -231,7 +231,7 @@ Nevertheless, there are some advantages using the alternative method:
 - Each app Git repository is downloadable and instantly buildable locally.
 - Every single piece of manual labor around maintaining an apps repository
   is fully automated. Building, testing, quality control, publishing, changelogs
-  and even the apps repository README are updated automatically.  This level
+  and even the apps repository README are updated automatically. This level
   of automation allows us to focus completely on developing the actual app.
 - Availability of Beta and Edge channels for everyone who's interested or
   willing to test.
@@ -246,12 +246,12 @@ This repository keeps a change log using [GitHub's releases][releases]
 functionality.
 
 Releases are based on [Semantic Versioning][semver], and use the format
-of ``MAJOR.MINOR.PATCH``. In a nutshell, the version will be incremented
+of `MAJOR.MINOR.PATCH`. In a nutshell, the version will be incremented
 based on the following:
 
-- ``MAJOR``: Incompatible or major changes.
-- ``MINOR``: Backwards-compatible new features and enhancements.
-- ``PATCH``: Backwards-compatible bugfixes and package updates.
+- `MAJOR`: Incompatible or major changes.
+- `MINOR`: Backwards-compatible new features and enhancements.
+- `PATCH`: Backwards-compatible bugfixes and package updates.
 
 ## Support
 

@@ -17,3 +17,6 @@ indent_size = 2
 
 [{.gitignore,.gitkeep,.editorconfig}]
 indent_size = 2
+
+[*.{yaml,yml}]
+indent_size = 2
