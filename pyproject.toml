@@ -6,7 +6,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "repository-updater"
-version = "2.0.1"
+# Stays 0.0.0 in development; the release workflow stamps the real version
+# from the Git tag with `uv version` at publish time.
+version = "0.0.0"
 description = "Home Assistant Community Apps Repository Updater"
 readme = "README.md"
 license = "MIT"
