@@ -17,6 +17,10 @@ Icon
 
 # pytest
 .pytest_cache
+.coverage
+.coverage.*
+coverage.xml
+htmlcov
 .cache
 
 # GITHUB Proposed Python stuff:

@@ -1,0 +1,18 @@
+# serializer version: 1
+# name: test_help
+  '''
+  Usage: repository-updater [OPTIONS]
+  
+    Home Assistant Community Apps Repository Updater.
+  
+  Options:
+    --token <TOKEN>                 GitHub access token
+    --repository <orgname/reponame>
+                                    The Home Assistant Apps repository to update
+    --app, --addon <TARGET>         Update a single/specific app
+    --force                         Force an update of the app repository
+    --version                       Show the version and exit.
+    --help                          Show this message and exit.
+  
+  '''
+# ---

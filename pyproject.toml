@@ -58,11 +58,16 @@ repository-updater-git-askpass = "repositoryupdater.cli:git_askpass"
 dev = [
   "actionlint-py==1.7.12.25",
   "codespell==2.4.3",
+  "covdefaults==2.3.0",
+  "coverage[toml]==7.16.2",
   "pre-commit-hooks==6.0.0",
   "prek==0.5.7",
   "pylint==4.1.3",
+  "pytest==9.1.1",
+  "pytest-cov==7.1.0",
   "ruff==0.17.1",
   "shellcheck-py==0.11.0.1",
+  "syrupy==6.1.1",
   "ty==0.0.90",
   "yamllint==1.38.0",
   "zizmor==1.31.1",
@@ -80,6 +85,22 @@ include = [
   "README.md",
   "LICENSE.md",
 ]
+
+[tool.pytest.ini_options]
+addopts = "--cov --strict-markers --strict-config"
+xfail_strict = true
+
+[tool.coverage.run]
+plugins = ["covdefaults"]
+# source_pkgs, not source: coverage cannot resolve a bare package name in a
+# src layout and silently measures nothing.
+source_pkgs = ["repositoryupdater"]
+
+[tool.coverage.report]
+show_missing = true
+# covdefaults measures the tests too. The GitHub heavy load paths are hard to
+# test on the current sync code; this goes up to 95 with the async rewrite.
+fail_under = 85
 
 [tool.ty.environment]
 python-version = "3.12"

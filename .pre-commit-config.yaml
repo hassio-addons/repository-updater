@@ -79,6 +79,7 @@ repos:
         language: system
         types: [text]
         entry: uv run --no-sync end-of-file-fixer
+        exclude: ^tests/(?:.*/)?__snapshots__/
       - id: ty
         name: 🆎 Static type checking using ty
         language: system
@@ -105,11 +106,18 @@ repos:
         language: system
         types: [python]
         entry: uv run --no-sync pylint
+      - id: pytest
+        name: 🧪 Running tests and test coverage with pytest
+        language: system
+        types: [python]
+        entry: uv run --no-sync pytest
+        pass_filenames: false
       - id: trailing-whitespace
         name: ✄  Trim Trailing Whitespace
         language: system
         types: [text]
         entry: uv run --no-sync trailing-whitespace-fixer
+        exclude: ^tests/(?:.*/)?__snapshots__/
       - id: uv-lock
         name: 🔒 Check uv.lock is up to date
         language: system
