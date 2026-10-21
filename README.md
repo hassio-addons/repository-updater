@@ -175,9 +175,11 @@ apps:
 
 Each release then adds its notes under a `## <version>` heading above the
 newest version in `CHANGELOG.md`. A title like `# Changelog` and any
-introduction stay on top. Home Assistant uses these headings to show the
-changes between the installed and the new version. Edge updates without a
-release still replace the file.
+introduction stay on top. When an apps repository switches from `replace`, the
+release notes already in `CHANGELOG.md` get a heading with the version they
+belong to. Home Assistant uses these headings to show the changes between the
+installed and the new version. Edge updates without a release still replace the
+file.
 
 ## Apps Repository README template
 

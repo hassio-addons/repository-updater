@@ -51,7 +51,7 @@ STATIC_FILES = (
 )
 
 # Version heading of a changelog section, e.g. "## 1.2.0" or "## v1.2.0"
-VERSION_HEADING = re.compile(r"^## v?\d", re.MULTILINE)
+VERSION_HEADING = re.compile(r"^## v?\d+\.\d+", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -96,6 +96,8 @@ class App:
     clone_dir: Path | None
 
     current_version: str | None
+    # Version in the apps repository before this update
+    previous_version: str | None
     current_commit: Commit | None
     current_release: GitRelease | None
     existing_config_filename: str | None
@@ -132,6 +134,7 @@ class App:
         self.clone_dir = None
 
         self.current_version = None
+        self.previous_version = None
         self.current_commit = None
         self.current_release = None
         self.existing_config_filename = None
@@ -193,6 +196,7 @@ class App:
         if not self.updating:
             raise AppNotUpdatingError(self.config.repository_target)
 
+        self.previous_version = self.current_version
         self.current_version = self.latest_version
         self.current_release = self.latest_release
         self.current_commit = self.latest_commit
@@ -415,8 +419,16 @@ class App:
 
         # Insert above the newest version, below any title or introduction
         newest = VERSION_HEADING.search(previous)
-        split = newest.start() if newest else 0
-        intro, older = previous[:split], previous[split:]
+        if newest:
+            intro, older = previous[: newest.start()], previous[newest.start() :]
+        else:
+            intro, older = "", previous
+            if older.startswith("# "):
+                intro, _, older = older.partition("\n")
+                intro += "\n\n"
+            # File the notes left by replace mode under the version they belong to
+            if older.strip() and self.previous_version:
+                older = f"## {self.previous_version}\n\n{older.strip()}\n"
 
         # Replace the section of this version on a rerun or a forced update
         heading = f"## {self.current_version}"
