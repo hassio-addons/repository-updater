@@ -21,7 +21,11 @@ from github.GithubException import GithubException, UnknownObjectException
 from jinja2 import BaseLoader, Environment
 
 from .const import CHANNEL_BETA, CHANNEL_EDGE, CONFIG_FILENAMES, DEFAULT_ARCHS
-from .exceptions import AppConfigNotFoundError, AppNotUpdatingError
+from .exceptions import (
+    AppConfigNotFoundError,
+    AppNotUpdatingError,
+    AppReleaseNotFoundError,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -42,6 +46,14 @@ STATIC_FILES = (
     "apparmor.txt",
     "translations",
 )
+
+
+def _is_prerelease(version: str) -> bool:
+    """Return whether a version string carries a semver prerelease part."""
+    if not semver.Version.is_valid(version):
+        return False
+
+    return bool(semver.Version.parse(version).prerelease)
 
 
 @dataclass(frozen=True)
@@ -162,7 +174,11 @@ class App:
         """Clone the app source to a local working directory."""
         self.output.step("Cloning app git repository")
         self.clone_dir = Path(tempfile.mkdtemp(prefix=self.config.app_target))
-        self.app_clone = self.github.clone(self.app_repository, str(self.clone_dir))
+        # Set by load() before this runs; ty cannot follow that (see pyproject).
+        self.app_clone = self.github.clone(
+            self.app_repository,  # ty: ignore[invalid-argument-type]
+            str(self.clone_dir),
+        )
         self.app_clone.git.checkout(self.current_commit.sha)
         self.output.done("Cloned!")
 
@@ -243,14 +259,16 @@ class App:
     def _load_latest_info(self) -> None:
         """Determine latest available app version and config."""
         for release in self.app_repository.get_releases():
-            self.latest_version = release.tag_name.lstrip("v")
-            prerelease = (
-                release.prerelease
-                or semver.parse_version_info(self.latest_version).prerelease
-            )
-            if release.draft or (prerelease and self.config.channel != CHANNEL_BETA):
+            if release.draft:
                 continue
+
+            version = release.tag_name.removeprefix("v")
+            prerelease = release.prerelease or _is_prerelease(version)
+            if prerelease and self.config.channel != CHANNEL_BETA:
+                continue
+
             self.latest_release = release
+            self.latest_version = version
             break
 
         if self.latest_release:
@@ -265,6 +283,13 @@ class App:
                 self.latest_version = last_commit.sha[:7]
                 self.latest_commit = last_commit
                 self.latest_is_release = False
+
+        # No release this channel can publish, and on edge not even a commit.
+        # Everything below needs something to read the configuration from.
+        if self.latest_commit is None or self.latest_version is None:
+            raise AppReleaseNotFoundError(
+                self.app_repository.full_name, self.config.channel
+            )
 
         latest_config_file, config_file = self._fetch_latest_config_file()
         latest_config = (

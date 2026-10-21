@@ -152,6 +152,11 @@ class Repository:
                 contents = self.github_repository.get_contents(config_file)
             except UnknownObjectException:
                 continue
+
+            # A directory comes back as a list of its contents.
+            if isinstance(contents, list):
+                continue
+
             app_list = yaml.safe_load(contents.decoded_content)
             self.output.done("Loaded!")
             return app_list
@@ -169,7 +174,11 @@ class Repository:
         """Clone the app repository to a local working directory."""
         self.output.step("Cloning app repository")
         self.clone_dir = Path(tempfile.mkdtemp(prefix="repoupdater"))
-        self.git_repo = self.github.clone(self.github_repository, str(self.clone_dir))
+        # Set by load() before this runs; ty cannot follow that (see pyproject).
+        self.git_repo = self.github.clone(
+            self.github_repository,  # ty: ignore[invalid-argument-type]
+            str(self.clone_dir),
+        )
         self.output.done("Cloned!")
 
     def generate_readme(self) -> None:
