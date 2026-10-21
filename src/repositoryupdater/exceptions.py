@@ -44,6 +44,17 @@ class AppConfigNotFoundError(RepositoryUpdaterError):
         super().__init__(f"Could not find an app configuration file in {location}")
 
 
+class AppReleaseNotFoundError(RepositoryUpdaterError):
+    """Raised when an app has no version the current channel can publish."""
+
+    def __init__(self, repository: str, channel: str) -> None:
+        """Initialize with the app repository and the channel it was read for."""
+        super().__init__(
+            f"App repository {repository} has no version to publish "
+            f'on the "{channel}" channel'
+        )
+
+
 class AppNotUpdatingError(RepositoryUpdaterError):
     """Raised when updating an app that was left out of this run."""
 

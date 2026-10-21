@@ -5,9 +5,15 @@ This module extends the main PyGitHub class in order to add some extra
 functionality.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from git import Repo
 from github import Github as PyGitHub
-from github import Repository
+
+if TYPE_CHECKING:
+    from github.Repository import Repository
 
 
 class GitHub(PyGitHub):
@@ -15,12 +21,10 @@ class GitHub(PyGitHub):
 
     token: str
 
-    def __init__(self, login_or_token: str | None = None) -> None:
+    def __init__(self, token: str) -> None:
         """Initialize a new GitHub object."""
-        super().__init__(
-            login_or_token=login_or_token,
-        )
-        self.token = login_or_token
+        super().__init__(login_or_token=token)
+        self.token = token
 
     def clone(self, repository: Repository, destination: str) -> Repo:
         """Clone a GitHub repository and return a Git object."""
