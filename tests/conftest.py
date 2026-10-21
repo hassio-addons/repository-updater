@@ -1,5 +1,7 @@
 """Common fixtures and helpers for the Repository Updater tests."""
 
+# pylint: disable=protected-access
+
 from __future__ import annotations
 
 from collections.abc import Callable

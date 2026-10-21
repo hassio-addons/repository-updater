@@ -1,7 +1,10 @@
 """Tests for the command line interface."""
 
+# pylint: disable=redefined-outer-name
+
 from __future__ import annotations
 
+import runpy
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
@@ -126,8 +129,6 @@ def test_git_askpass_refuses_unknown_prompt(
 def test_main_module_runs_the_cli() -> None:
     """Test python -m repositoryupdater starts the same command."""
     with patch.object(cli.repository_updater, "main", MagicMock()) as main:
-        import runpy  # noqa: PLC0415
-
         runpy.run_module("repositoryupdater", run_name="__main__")
 
     main.assert_called_once()

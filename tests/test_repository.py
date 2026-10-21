@@ -1,5 +1,7 @@
 """Tests for the repository module."""
 
+# pylint: disable=protected-access,redefined-outer-name
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -7,6 +9,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
+import yaml
 from github.GithubException import UnknownObjectException
 from repositoryupdater import repository as repository_module
 from repositoryupdater.exceptions import (
@@ -104,8 +107,6 @@ def test_load_apps(repository: Repository) -> None:
         patch.object(repository, "_fetch_app_list") as fetch_app_list,
         patch.object(repository_module, "App") as app_class,
     ):
-        import yaml  # noqa: PLC0415
-
         fetch_app_list.return_value = yaml.safe_load(APP_LIST)
         repository.load_apps()
 

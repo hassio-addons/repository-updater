@@ -1,5 +1,7 @@
 """Tests for the files an app update writes into the apps repository."""
 
+# pylint: disable=redefined-outer-name
+
 from __future__ import annotations
 
 import json
