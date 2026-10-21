@@ -60,6 +60,7 @@ dev = [
   "codespell==2.4.3",
   "pre-commit-hooks==6.0.0",
   "prek==0.5.7",
+  "pylint==4.1.3",
   "ruff==0.17.1",
   "shellcheck-py==0.11.0.1",
   "ty==0.0.90",
@@ -89,6 +90,29 @@ python-version = "3.12"
 # async rewrite; this goes back to an error then, together with dropping
 # --exit-zero-on-warning from the prek hook and the typing workflow.
 unresolved-attribute = "warn"
+
+[tool.pylint.MASTER]
+ignore = ["tests"]
+
+[tool.pylint.BASIC]
+good-names = ["_", "ex", "fp", "i", "id", "j", "k", "on", "Run", "T"]
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+  "too-few-public-methods",
+  "duplicate-code",
+  "format",
+  "unsubscriptable-object",
+]
+
+[tool.pylint.SIMILARITIES]
+ignore-imports = true
+
+[tool.pylint.FORMAT]
+max-line-length = 88
+
+[tool.pylint.DESIGN]
+max-attributes = 40
 
 [tool.ruff]
 target-version = "py312"
