@@ -39,15 +39,23 @@ Usage: repository-updater [OPTIONS]
   Home Assistant Community Apps Repository Updater.
 
 Options:
-  --token <TOKEN>                 GitHub access token
+  --token <TOKEN>                 GitHub access token  [env var: INPUT_TOKEN,
+                                  GITHUB_TOKEN]
   --repository <orgname/reponame>
                                   The Home Assistant Apps repository to update
-  --app <TARGET>                  Update a single/specific app
-  --addon <TARGET>                (Deprecated) Use --app instead
-  --force                         Force an update of the app repository
+                                  [env var: INPUT_REPOSITORY, GITHUB_REPOSITORY]
+  --app, --addon <TARGET>         Update a single/specific app  [env var:
+                                  INPUT_APP, INPUT_ADDON]
+  --force                         Force an update of the app repository  [env
+                                  var: INPUT_FORCE]
   --version                       Show the version and exit.
   --help                          Show this message and exit.
 ```
+
+Every option can also be set through the environment variables listed with
+it. When more than one is set, the first one that is not empty wins, and an
+option on the command line always beats the environment. `--addon` and the
+`INPUT_ADDON` variable are deprecated; use `--app` and `INPUT_APP` instead.
 
 To get a GitHub token, please see the GitHub article: [Create a token][token]
 

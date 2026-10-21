@@ -19,6 +19,31 @@ if TYPE_CHECKING:
 ARGS = ["--token", "secret", "--repository", "hassio-addons/repository"]
 
 
+ENVIRONMENT_VARIABLES = (
+    "GITHUB_REPOSITORY",
+    "GITHUB_TOKEN",
+    "INPUT_ADDON",
+    "INPUT_APP",
+    "INPUT_FORCE",
+    "INPUT_REPOSITORY",
+    "INPUT_TOKEN",
+)
+
+
+@pytest.fixture(autouse=True)
+def clean_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the environment the tests run in out of the CLI options.
+
+    GitHub Actions sets GITHUB_REPOSITORY and friends for every job, which
+    would otherwise fill in options these tests leave out on purpose.
+    """
+    for name in ENVIRONMENT_VARIABLES:
+        monkeypatch.delenv(name, raising=False)
+
+    # Click wraps the help to the terminal width; pin it for the snapshot.
+    monkeypatch.setenv("COLUMNS", "80")
+
+
 @pytest.fixture
 def runner() -> CliRunner:
     """Return a runner for invoking the CLI."""
@@ -73,6 +98,95 @@ def test_addon_is_an_alias_for_app(runner: CliRunner) -> None:
 
     assert result.exit_code == 0, result.output
     assert repository.call_args.args[2] == "example"
+
+
+def test_options_from_github_action_inputs(runner: CliRunner) -> None:
+    """Test a Docker action run, where every input arrives as INPUT_*.
+
+    GitHub sets inputs that were not given to an empty string, so the
+    deprecated addon input and the repository the workflow runs in must
+    still be picked up behind them.
+    """
+    environment = {
+        "INPUT_TOKEN": "secret",
+        "INPUT_REPOSITORY": "",
+        "GITHUB_REPOSITORY": "hassio-addons/repository-edge",
+        "INPUT_APP": "",
+        "INPUT_ADDON": "example",
+        "INPUT_FORCE": "true",
+    }
+
+    with (
+        patch.object(cli, "GitHub") as github,
+        patch.object(cli, "Repository") as repository,
+    ):
+        result = runner.invoke(cli.repository_updater, [], env=environment)
+
+    assert result.exit_code == 0, result.output
+    github.assert_called_once_with("secret")
+    assert repository.call_args.args[1:] == (
+        "hassio-addons/repository-edge",
+        "example",
+    )
+    assert repository.call_args.kwargs["force"] is True
+
+
+@pytest.mark.parametrize(
+    ("environment", "option", "expected"),
+    [
+        ({"INPUT_FORCE": "false"}, "force", False),
+        ({"INPUT_FORCE": ""}, "force", False),
+        ({"INPUT_APP": "new", "INPUT_ADDON": "old"}, "app", "new"),
+        ({"INPUT_TOKEN": "", "GITHUB_TOKEN": "fallback"}, "token", "fallback"),
+        ({"INPUT_TOKEN": "input", "GITHUB_TOKEN": "fallback"}, "token", "input"),
+    ],
+    ids=[
+        "force false",
+        "force empty",
+        "app over addon",
+        "token fallback",
+        "token input first",
+    ],
+)
+def test_environment_precedence(
+    runner: CliRunner,
+    environment: dict[str, str],
+    option: str,
+    expected: object,
+) -> None:
+    """Test which environment variable wins when several are set."""
+    environment = {
+        "INPUT_TOKEN": "secret",
+        "GITHUB_REPOSITORY": "hassio-addons/repository",
+        **environment,
+    }
+
+    with (
+        patch.object(cli, "GitHub") as github,
+        patch.object(cli, "Repository") as repository,
+    ):
+        result = runner.invoke(cli.repository_updater, [], env=environment)
+
+    assert result.exit_code == 0, result.output
+    received = {
+        "token": github.call_args.args[0],
+        "app": repository.call_args.args[2],
+        "force": repository.call_args.kwargs["force"],
+    }
+    assert received[option] == expected
+
+
+def test_command_line_beats_environment(runner: CliRunner) -> None:
+    """Test an option given on the command line wins over the environment."""
+    with patch.object(cli, "GitHub"), patch.object(cli, "Repository") as repository:
+        result = runner.invoke(
+            cli.repository_updater,
+            [*ARGS, "--app", "from-argument"],
+            env={"INPUT_APP": "from-environment"},
+        )
+
+    assert result.exit_code == 0, result.output
+    assert repository.call_args.args[2] == "from-argument"
 
 
 def test_error_is_reported_and_still_cleans_up(runner: CliRunner) -> None:
