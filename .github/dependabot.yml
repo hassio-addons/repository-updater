@@ -11,3 +11,8 @@ updates:
     schedule:
       interval: "daily"
       time: "06:00"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"

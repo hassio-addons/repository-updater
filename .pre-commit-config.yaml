@@ -63,6 +63,12 @@ repos:
         language: system
         types: [yaml]
         entry: uv run --no-sync check-yaml
+      - id: codespell
+        name: ✅ Check code for common misspellings
+        language: system
+        types: [text]
+        exclude: ^(uv\.lock|package-lock\.json)$
+        entry: uv run --no-sync codespell
       - id: detect-private-key
         name: 🕵️  Detect Private Keys
         language: system
@@ -81,6 +87,12 @@ repos:
         always_run: true
         args:
           - --branch=main
+      - id: prettier
+        name: 💄 Ensuring files are prettier
+        language: system
+        types_or: [yaml, json, markdown]
+        entry: npm run prettier
+        pass_filenames: false
       - id: trailing-whitespace
         name: ✄  Trim Trailing Whitespace
         language: system
@@ -92,6 +104,11 @@ repos:
         files: ^(pyproject\.toml|uv\.lock)$
         entry: uv lock --check
         pass_filenames: false
+      - id: yamllint
+        name: 🎗  Check YAML files with yamllint
+        language: system
+        types: [yaml]
+        entry: uv run --no-sync yamllint
       - id: zizmor
         name: 🌈 Check GitHub Actions workflows with zizmor
         language: system

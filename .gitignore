@@ -93,3 +93,6 @@ lib64
 pyvenv.cfg
 .venv
 pip-selfcheck.json
+
+# Node
+node_modules
