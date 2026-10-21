@@ -61,20 +61,28 @@ To get a GitHub token, please see the GitHub article: [Create a token][token]
 
 ## Using Docker
 
-The Repository Updater has been packaged in a Docker container as well.
-This allows for easy and quick use, without the need for a Python setup. This
-can be quite useful when using this tool in a CI server like; Travis,
-CircleCI or GitLab CI.
+The Repository Updater is also published as a container image on the GitHub
+Container Registry, for amd64 and arm64. This allows for quick use without a
+Python setup, for example on a CI server.
 
 ```bash
-docker run -it --rm hassioaddons/repository-updater:latest
+docker run --rm -e GITHUB_TOKEN ghcr.io/hassio-addons/repository-updater:latest \
+  --repository hassio-addons/repository
 ```
 
-All the usage information parameters from the previous chapter apply.
-For example, this shows the current version of the tool:
+All the options from the previous chapter apply, including their
+environment variables. For example, this shows the current version:
 
 ```bash
-docker run -it --rm hassioaddons/repository-updater:latest --version
+docker run --rm ghcr.io/hassio-addons/repository-updater:latest --version
+```
+
+Every image is signed with [cosign][cosign] and carries a build provenance
+attestation, which can be checked with:
+
+```bash
+gh attestation verify --owner hassio-addons \
+  oci://ghcr.io/hassio-addons/repository-updater:latest
 ```
 
 ## Using a GitHub Action
@@ -95,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🚀 Run Repository Updater
-        uses: hassio-addons/repository-updater@v1
+        uses: hassio-addons/repository-updater@v2
         with:
           app: ${{ github.event.client_payload.app }}
           repository: ${{ github.repository }}
@@ -325,6 +333,7 @@ SOFTWARE.
 [commits-shield]: https://img.shields.io/github/commit-activity/y/hassio-addons/repository-updater.svg
 [commits]: https://github.com/hassio-addons/repository-updater/commits/main
 [contributors]: https://github.com/hassio-addons/repository-updater/graphs/contributors
+[cosign]: https://docs.sigstore.dev/cosign/
 [discord-shield]: https://img.shields.io/discord/330944238910963714.svg
 [discord]: https://discord.gg/c5DvZ4e
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg

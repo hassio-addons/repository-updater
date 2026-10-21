@@ -30,8 +30,8 @@ The apps repository declares its apps in `.apps.yml` (or the older
 | `  exceptions.py`        | The `RepositoryUpdaterError` hierarchy                     |
 | `  const.py`             | Channels and the file names that are looked up             |
 | `tests/`                 | pytest suite with syrupy snapshots                         |
-| `action.yaml`, `action/` | The GitHub Action                                          |
-| `docker/`                | The container image                                        |
+| `action.yaml`            | The GitHub Action; runs the published image                |
+| `Dockerfile`             | The container image, built from the wheel                  |
 
 ## Commands
 
