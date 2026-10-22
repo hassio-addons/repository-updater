@@ -24,6 +24,7 @@ jobs:
   analyze:
     name: Analyze ${{ matrix.language }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       security-events: write # upload CodeQL results to the code-scanning dashboard
       actions: read # CodeQL reads the Actions workflow runs on private repos

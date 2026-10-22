@@ -1,0 +1,12 @@
+---
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions about Home Assistant apps
+    url: https://community.home-assistant.io
+    about: Ask questions and discuss with the Home Assistant community.
+  - name: 💬 Chat on Discord
+    url: https://discord.gg/c5DvZ4e
+    about: Talk with the community on the Home Assistant Community Apps Discord.
+  - name: 🔒 Report a security issue
+    url: https://github.com/hassio-addons/repository-updater/security/advisories/new
+    about: Report a vulnerability privately.

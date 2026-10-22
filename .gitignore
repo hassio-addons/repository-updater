@@ -1,102 +1,125 @@
-# Hide sublime text stuff
-*.sublime-project
-*.sublime-workspace
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Hide some OS X stuff
-.DS_Store
+# OSX useful to ignore
+*.DS_Store
 .AppleDouble
 .LSOverride
-Icon
 
 # Thumbnails
 ._*
 
-# IntelliJ IDEA
-.idea
-*.iml
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
-# pytest
-.pytest_cache
-.coverage
-.coverage.*
-coverage.xml
-htmlcov
-.cache
-
-# GITHUB Proposed Python stuff:
-*.py[cod]
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
 # C extensions
 *.so
 
-# Logs
-*.log
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
 pip-log.txt
+pip-delete-this-directory.txt
 
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+.pytest_cache/
 
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+
+# Sphinx documentation
+docs/_build/
+
+# pyenv
 .python-version
 
-# emacs auto backups
-*~
-*#
-*.orig
-
-# venv stuff
-pyvenv.cfg
-pip-selfcheck.json
-venv
+# virtualenv
 .venv
-Pipfile*
-share/*
+venv/
+ENV/
 
-# vimmy stuff
-*.swp
-*.swo
+# ruff
+.ruff_cache
+
+# ty
+.ty/
 
 # Visual Studio Code
 .vscode
 
+# IntelliJ Idea family of suites
+.idea
+*.iml
 
-# Windows Explorer
-desktop.ini
-/home-assistant.pyproj
-/home-assistant.sln
-/.vs/*
+## File-based project format:
+*.ipr
+*.iws
 
-# mypy
-/.mypy_cache/*
+## mpeltonen/sbt-idea plugin
+.idea_modules/
 
-# Packages
-*.egg
-*.egg-info
-dist
-build
-eggs
-.eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
-lib
-lib64
+# PyBuilder
+target/
 
-# Virtualenv
-.Python
-[Bb]in
-[Ii]nclude
-[Ll]ib
-[Ll]ib64
-[Ll]ocal
-[Ss]cripts
-pyvenv.cfg
-.venv
-pip-selfcheck.json
+# Cookiecutter
+output/
+python_boilerplate/
 
 # Node
-node_modules
+node_modules/
+
+# Deepcode AI
+.dccache
+
+# Claude
+.claude/

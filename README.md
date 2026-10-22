@@ -104,7 +104,7 @@ configuration changed since, even by hand, simply gets loaded again. The
 cache does keep an app's repository URL and the commit behind its version
 until that configuration changes; after renaming an app repository or moving
 a release tag, run once with `--no-cache`. The cache lives in
-`~/.cache/repository-updater` (or `$XDG_CACHE_HOME`); `--cache-dir` puts it
+`~/.cache/repository-updater` (or `$XDG_CACHE_HOME/repository-updater`); `--cache-dir` puts it
 elsewhere and `--no-cache` runs without it.
 
 ## Using Docker
@@ -147,8 +147,11 @@ on:
   repository_dispatch:
     types: ["update"]
 
+# The token below does the work; the workflow's own token needs nothing.
+permissions: {}
+
 jobs:
-  whatever:
+  update:
     name: Running updater for ${{ github.event.client_payload.app }}
     runs-on: ubuntu-latest
     # One run at a time: a run that finds the apps repository changed under
@@ -200,7 +203,7 @@ publish:
   runs-on: ubuntu-latest
   steps:
     - name: 🚀 Dispatch Repository Updater update signal
-      uses: peter-evans/repository-dispatch@v1
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
       with:
         token: ${{ secrets.DISPATCH_TOKEN }}
         repository: hassio-addons/repository
@@ -210,7 +213,7 @@ publish:
 
 ## Apps Repository Configuration
 
-In order for the Repository Updater to do its job, we need feed it some
+In order for the Repository Updater to do its job, we need to feed it some
 information. It needs to know which apps there are currently in the
 apps repository and where each app is located on GitHub.
 
@@ -219,7 +222,7 @@ There are 3 stability channel levels available:
 
 - **stable**: Stable releases
 - **beta**: Beta / test releases
-- **edge**: Latest builds, usually build straight from development
+- **edge**: Latest builds, usually built straight from development
 
 Create a `.apps.yml` file in the root of the apps repository,
 which looks like this:
@@ -246,7 +249,7 @@ and the `apps` key `addons`; both still work.
 
 The target in the apps repository is specified as the key for each app,
 this will be the directory name inside the apps repository as well. This is
-different from the `target` key, in a way that that key specified the app
+different from the `target` key, in a way that that key specifies the app
 target directory inside the git repository of the app itself.
 
 In the above example, `demo` will be the name of the app directory
@@ -294,7 +297,7 @@ its own as well, which gets the variables of that one app.
 The following variables are available in your templates and are passed into it
 upon rendering your template.
 
-- **apps**: A list of apps in this apps repository
+- **apps**: A list of apps in this apps repository, sorted by name
 - **addons**: Alias for `apps` (for backward compatibility)
 - **channel**: The channel type of this apps repository
 - **description**: The GitHub apps repository description
@@ -315,9 +318,9 @@ list contains the following variables:
 - **slug**: The app slug
 - **target**: The target directory of the app inside the apps repository
 - **image**: The container image, as written in `.apps.yml`
-- **images**: Dictionary of images per architecture
-  - **aarch64**: `aarch64` image (if the app supports it)
-  - **amd64**: `amd64` image (if the app supports it)
+- **images**: Dictionary of the image per architecture the app supports, like
+  `aarch64` and `amd64`. An app that declares no architectures gets
+  `aarch64`, `amd64`, `armhf`, `armv7` and `i386`.
 - **channel**: The channel of the apps repository
 - **version**: The version of the app, like `v1.2.3` for a release, or the
   short SHA of a commit on edge
@@ -403,7 +406,7 @@ You have several options to get them answered:
   discussions and questions.
 - Join the [Reddit subreddit][reddit] in [/r/homeassistant][reddit]
 
-You could also [open an issue here][issue] GitHub.
+You could also [open an issue here on GitHub][issue].
 
 ## Contributing
 
@@ -411,7 +414,9 @@ This is an active open-source project. We are always open to people who want to
 use the code or contribute to it.
 
 We have set up a separate document containing our
-[contribution guidelines](.github/CONTRIBUTING.md).
+[contribution guidelines](.github/CONTRIBUTING.md). Using AI tools to help?
+Read our [AI policy](AI_POLICY.md) first. Found a security issue? Please
+follow our [security policy](.github/SECURITY.md) instead of opening an issue.
 
 Thank you for being involved! :heart_eyes:
 

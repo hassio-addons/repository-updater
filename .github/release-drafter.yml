@@ -21,7 +21,7 @@ categories:
       - "performance"
   - title: "🧰 Maintenance"
     labels:
-      - "chore"
+      - "maintenance"
       - "ci"
   - title: "📚 Documentation"
     labels:
@@ -43,11 +43,11 @@ version-resolver:
   patch:
     labels:
       - "bugfix"
-      - "chore"
       - "ci"
       - "dependencies"
       - "documentation"
       - "enhancement"
+      - "maintenance"
       - "performance"
       - "refactor"
   default: patch

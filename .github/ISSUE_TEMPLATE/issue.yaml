@@ -1,0 +1,47 @@
+---
+name: Issue
+description: Report an issue with the Repository Updater.
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of what the issue is, and what you expected instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The version of the Repository Updater, as `--version` shows it.
+      placeholder: 3.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: runs-as
+    attributes:
+      label: How do you run it?
+      options:
+        - GitHub Action
+        - Container image
+        - Command line (pip, uv)
+    validations:
+      required: true
+  - type: input
+    id: repository
+    attributes:
+      label: Apps repository
+      description: The apps repository it updates, if it is public.
+      placeholder: hassio-addons/repository
+    validations:
+      required: false
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: Additional information
+      description: >-
+        The output of the run helps a lot; run with `--dry-run` to see what it
+        would do without changing anything. Leave tokens out.
+      render: text
+    validations:
+      required: false

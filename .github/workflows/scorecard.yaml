@@ -26,7 +26,8 @@ jobs:
   analysis:
     name: Scorecard analysis
     runs-on: ubuntu-latest
-    if: github.event.repository.default_branch == github.ref_name || github.event_name == 'pull_request'
+    timeout-minutes: 15
+    if: github.event.repository.default_branch == github.ref_name
     permissions:
       # Job permissions replace the top-level read-all, so restate read access.
       contents: read

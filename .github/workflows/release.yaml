@@ -26,6 +26,7 @@ jobs:
   prepare:
     name: Check the release draft
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: github.ref == 'refs/heads/main'
     permissions:
       # Only those who can push see release drafts.
@@ -102,6 +103,7 @@ jobs:
   build:
     name: Build package
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: prepare
     permissions:
       # Job permissions replace the top-level block, so the checkout needs read.
@@ -155,6 +157,7 @@ jobs:
   release:
     name: Publish the release
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # Only once the image exists: the release is immutable the moment it is
     # published, and its action.yaml points at that image.
     needs:
@@ -181,6 +184,7 @@ jobs:
   pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: release
     environment:
       name: release
@@ -202,6 +206,7 @@ jobs:
   image:
     name: Publish image to GHCR
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs:
       - prepare
       - build

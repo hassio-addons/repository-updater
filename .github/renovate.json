@@ -3,7 +3,7 @@
   "extends": ["helpers:pinGitHubActionDigests"],
   "rebaseWhen": "behind-base-branch",
   "dependencyDashboard": true,
-  "labels": ["dependencies", "no-stale"],
+  "labels": ["dependencies"],
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true
@@ -12,16 +12,11 @@
   "packageRules": [
     {
       "matchManagers": ["pep621"],
-      "addLabels": ["python"]
-    },
-    {
-      "matchManagers": ["pep621"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     },
     {
       "matchManagers": ["npm", "nvm"],
-      "addLabels": ["javascript"],
       "rangeStrategy": "pin"
     },
     {
@@ -31,7 +26,6 @@
     },
     {
       "matchManagers": ["github-actions"],
-      "addLabels": ["github_actions"],
       "rangeStrategy": "pin"
     },
     {
@@ -43,6 +37,12 @@
       "description": "Do not let Renovate pin or bump the Python version the workflows ask for. The runner images lag CPython patch releases, so pinning the newest patch breaks setup-uv until they catch up. Supported versions are managed by hand.",
       "matchManagers": ["github-actions"],
       "matchDepNames": ["python"],
+      "enabled": false
+    },
+    {
+      "description": "The image the action runs is the one of its own release; release preparation sets it, and the release workflow checks it is exactly that version.",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["ghcr.io/hassio-addons/repository-updater"],
       "enabled": false
     }
   ]
