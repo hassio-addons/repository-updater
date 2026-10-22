@@ -9,7 +9,7 @@
 
 FROM ghcr.io/astral-sh/uv:0.13.5@sha256:32a7bb39b496babbd997b0a39a4d66c126bdaf5661b302bf6f06abda8deca6ff AS uv
 
-FROM python:3.15-alpine3.23@sha256:ad4d4871decb4e08192d57566b1617fb5ff1ba64ecd5422b5256feec1db0e5b0
+FROM python:3.15-alpine3.23@sha256:4d38eb4f1f051a11b0258ae7eee6a3353f1c206587accb89b34fa55703e3e5a4
 
 ENV \
     UV_COMPILE_BYTECODE=1 \
