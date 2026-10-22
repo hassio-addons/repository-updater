@@ -34,24 +34,25 @@ pip install repository-updater
 The Repository Updater is a pretty simple, straightforward CLI tool.
 
 ```txt
-Usage: repository-updater [OPTIONS]
+ Usage: repository-updater [OPTIONS]
 
-  Home Assistant Community Apps Repository Updater.
+ Bring a Home Assistant Apps repository up to date with its apps.
 
-Options:
-  --token <TOKEN>                 GitHub access token  [env var: INPUT_TOKEN,
-                                  GITHUB_TOKEN]
-  --repository <orgname/reponame>
-                                  The Home Assistant Apps repository to update
-                                  [env var: INPUT_REPOSITORY, GITHUB_REPOSITORY]
-  --app, --addon <TARGET>         Update a single/specific app  [env var:
-                                  INPUT_APP, INPUT_ADDON]
-  --force                         Force an update of the app repository  [env
-                                  var: INPUT_FORCE]
-  --dry-run                       Show what would be committed, without
-                                  committing  [env var: INPUT_DRY_RUN]
-  --version                       Show the version and exit.
-  --help                          Show this message and exit.
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
+│ *  --token              TOKEN       GitHub access token. [env var: INPUT_TOKEN, GITHUB_TOKEN]    │
+│                                     [required]                                                   │
+│ *  --repository         OWNER/NAME  The Home Assistant Apps repository to update.                │
+│                                     [env var: INPUT_REPOSITORY, GITHUB_REPOSITORY]               │
+│                                     [required]                                                   │
+│    --app,--addon        APP         Update a single app. --addon is the deprecated name.         │
+│                                     [env var: INPUT_APP, INPUT_ADDON]                            │
+│    --force                          Update apps even when they look up to date.                  │
+│                                     [env var: INPUT_FORCE]                                       │
+│    --dry-run                        Show what would be committed, without committing.            │
+│                                     [env var: INPUT_DRY_RUN]                                     │
+│    --version                        Show the version and exit.                                   │
+│    --help                           Show this message and exit.                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 Every option can also be set through the environment variables listed with

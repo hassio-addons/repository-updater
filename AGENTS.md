@@ -19,23 +19,23 @@ The apps repository declares its apps in `.apps.yml` (or the older
 
 ## Project layout
 
-| Path                     | Purpose                                             |
-| ------------------------ | --------------------------------------------------- |
-| `src/repositoryupdater/` | The package                                         |
-| `  cli.py`               | Click command; runs the updater                     |
-| `  updater.py`           | Loads every app and commits the updates             |
-| `  github/`              | Asynchronous client for the GitHub API we use       |
-| `  applist.py`           | The `.apps.yml` model                               |
-| `  versions.py`          | Which version a channel publishes, and how it shows |
-| `  appconfig.py`         | Reading and writing app configuration files         |
-| `  render.py`            | READMEs, changelogs and commit messages             |
-| `  archive.py`           | Reading app files out of a repository tarball       |
-| `  output.py`            | Everything the terminal shows; nothing else prints  |
-| `  exceptions.py`        | The `RepositoryUpdaterError` hierarchy              |
-| `  const.py`             | Channels and the file names that are looked up      |
-| `tests/`                 | pytest suite with syrupy snapshots                  |
-| `action.yaml`            | The GitHub Action; runs the published image         |
-| `Dockerfile`             | The container image, built from the wheel           |
+| Path                     | Purpose                                                |
+| ------------------------ | ------------------------------------------------------ |
+| `src/repositoryupdater/` | The package                                            |
+| `  cli/`                 | Typer command and its error handling; runs the updater |
+| `  updater.py`           | Loads every app and commits the updates                |
+| `  github/`              | Asynchronous client for the GitHub API we use          |
+| `  applist.py`           | The `.apps.yml` model                                  |
+| `  versions.py`          | Which version a channel publishes, and how it shows    |
+| `  appconfig.py`         | Reading and writing app configuration files            |
+| `  render.py`            | READMEs, changelogs and commit messages                |
+| `  archive.py`           | Reading app files out of a repository tarball          |
+| `  output.py`            | Everything the terminal shows; nothing else prints     |
+| `  exceptions.py`        | The `RepositoryUpdaterError` hierarchy                 |
+| `  const.py`             | Channels and the file names that are looked up         |
+| `tests/`                 | pytest suite with syrupy snapshots                     |
+| `action.yaml`            | The GitHub Action; runs the published image            |
+| `Dockerfile`             | The container image, built from the wheel              |
 
 ## Commands
 
@@ -59,7 +59,9 @@ committing it.
 - Failures the user can act on raise a subclass of `RepositoryUpdaterError`.
   The CLI turns those into a clean error message; anything else is a bug.
 - Only `output.py` writes to the terminal. Other modules report what happened
-  through the `Output` instance they are handed.
+  through the `Output` instance they are handed. Messages are Rich markup, so
+  values from the outside go through `plain()`, `highlight()` or `emphasis()`.
+  On GitHub Actions, sections become log groups and errors annotations.
 - What an apps repository relies on is a contract: the `.apps.yml` format
   (including the `addons` key), the variables handed to `.README.j2`
   templates, the commit messages, the Action inputs and the `--addon` alias.

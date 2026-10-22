@@ -1,4 +1,8 @@
 ---
+# Only our own files; dependencies ship YAML of their own.
+ignore: |
+  .venv/
+  node_modules/
 rules:
   braces:
     level: error

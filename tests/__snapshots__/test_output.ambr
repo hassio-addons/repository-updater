@@ -1,17 +1,41 @@
 # serializer version: 1
-# name: test_output
+# name: test_github_actions
   '''
-  Repository Updater
-  ---------------------------------------------------
-  --------------------------------------------------
-  Loading app example
-  Current version: 1.2.0
-  Cloning app repository...Cloned!
-  Re-generating README.md...Skipping
-  Committing changes...Failed!
+  Repository Updater 3.0.0
+  ────────────────────────────────────────────────────────────
+  Repository channel: stable
+  ::group::App ssh
+  Current version: 1.2.0 (abcdef1)
   This app has an update waiting to be published!
-  --------------------------------------------------
-  Updating app example
+  ::endgroup::
+  ::group::App [example] 2.0.0
+  This app is up to date.
+  ::endgroup::
+  ────────────────────────────────────────────────────────────
+  Committing :tada: Release of app [SSH] 1.3.0...Done: 1234567
+  Downloading app source...Failed!
+  Committing README...Skipping
+  ::error::GitHub rejected the token: Bad credentials 100%25
+  
+  '''
+# ---
+# name: test_terminal
+  '''
+  Repository Updater 3.0.0
+  ────────────────────────────────────────────────────────────
+  Repository channel: stable
+  ────────────────────────────────────────────────────────────
+  App ssh
+  Current version: 1.2.0 (abcdef1)
+  This app has an update waiting to be published!
+  ────────────────────────────────────────────────────────────
+  App [example] 2.0.0
+  This app is up to date.
+  ────────────────────────────────────────────────────────────
+  Committing :tada: Release of app [SSH] 1.3.0...Done: 1234567
+  Downloading app source...Failed!
+  Committing README...Skipping
+  Error: GitHub rejected the token: Bad credentials 100%
   
   '''
 # ---

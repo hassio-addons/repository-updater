@@ -126,7 +126,9 @@ class Updater:
             f"Repository channel: {self.output.highlight(app_list.channel)}"
         )
         if self.app_filter:
-            self.output.warning(f'Only updating app "{self.app_filter}" this run!')
+            self.output.warning(
+                f'Only updating app "{self.output.plain(self.app_filter)}" this run!'
+            )
 
         apps = await self._load_apps(app_list)
         self._report(apps, app_list.channel)
@@ -154,8 +156,7 @@ class Updater:
             if app.latest is None or not app.needs_update(app.latest, force=self.force):
                 continue
 
-            self.output.divider()
-            self.output.success(f"Updating app {app.target}")
+            self.output.section(f"Updating app {self.output.plain(app.target)}")
             files = await self._app_files(app, app.latest, app_list.channel, paths)
 
             published.add(app.target)
@@ -314,8 +315,8 @@ class Updater:
     def _report(self, apps: list[App], channel: Channel) -> None:
         """Show what was found for every app, in the order of the list."""
         for app in apps:
-            self.output.section(f"App {app.target}")
-            self.output.info(f"Source: {app.repository.html_url}")
+            self.output.section(f"App {self.output.plain(app.target)}")
+            self.output.info(f"Source: {self.output.plain(app.repository.html_url)}")
 
             if app.current is None:
                 current = self.output.emphasis("Not available")
@@ -341,7 +342,8 @@ class Updater:
             else:
                 self.output.success("This app is up to date.")
 
-        self.output.section("Done loading all repository apps")
+        self.output.end_section()
+        self.output.success("Done loading all repository apps")
 
     @staticmethod
     def _template_data(app: App, state: AppState, channel: Channel) -> dict[str, Any]:
@@ -454,7 +456,7 @@ class Updater:
         self, repository: Repository, user: User, message: str, files: Files
     ) -> None:
         """Commit files to the apps repository; in a dry run, show the diff."""
-        self.output.step(f"Committing {message}")
+        self.output.step(f"Committing {self.output.plain(message)}")
 
         if self.dry_run:
             changed = await self._changed_paths(repository, files)
@@ -464,7 +466,7 @@ class Updater:
 
             self.output.done("Would commit (dry run):")
             for path, change in sorted(changed.items()):
-                self.output.info(f"  {change}: {path}")
+                self.output.info(f"  {change}: {self.output.plain(path)}")
             return
 
         commit = await self.github.commit_files(

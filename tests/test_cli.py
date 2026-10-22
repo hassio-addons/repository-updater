@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 from repositoryupdater import APP_VERSION, cli
 from repositoryupdater.exceptions import RepositoryUpdaterError
@@ -30,6 +30,7 @@ ENVIRONMENT_VARIABLES = (
     "INPUT_FORCE",
     "INPUT_REPOSITORY",
     "INPUT_TOKEN",
+    "GITHUB_ACTIONS",
 )
 
 
@@ -43,8 +44,10 @@ def clean_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in ENVIRONMENT_VARIABLES:
         monkeypatch.delenv(name, raising=False)
 
-    # Click wraps the help to the terminal width; pin it for the snapshot.
-    monkeypatch.setenv("COLUMNS", "80")
+    # Rich renders the help to the terminal; pin it for the snapshot.
+    monkeypatch.setenv("COLUMNS", "100")
+    monkeypatch.setenv("NO_COLOR", "1")
+    monkeypatch.setenv("TERM", "dumb")
 
 
 @pytest.fixture
@@ -75,7 +78,7 @@ def options(updater: MagicMock) -> dict[str, Any]:
 
 def test_version(runner: CliRunner) -> None:
     """Test the version option shows the installed version."""
-    result = runner.invoke(cli.repository_updater, ["--version"])
+    result = runner.invoke(cli.cli, ["--version"])
 
     assert result.exit_code == 0
     assert APP_VERSION in result.output
@@ -83,7 +86,7 @@ def test_version(runner: CliRunner) -> None:
 
 def test_help(runner: CliRunner, snapshot: SnapshotAssertion) -> None:
     """Test the help output stays as documented."""
-    result = runner.invoke(cli.repository_updater, ["--help"])
+    result = runner.invoke(cli.cli, ["--help"], prog_name="repository-updater")
 
     assert result.exit_code == 0
     assert result.output == snapshot
@@ -91,9 +94,7 @@ def test_help(runner: CliRunner, snapshot: SnapshotAssertion) -> None:
 
 def test_run(runner: CliRunner, github: MagicMock, updater: MagicMock) -> None:
     """Test a run hands the options to the updater and runs it."""
-    result = runner.invoke(
-        cli.repository_updater, [*ARGS, "--app", "example", "--force", "--dry-run"]
-    )
+    result = runner.invoke(cli.cli, [*ARGS, "--app", "example", "--force", "--dry-run"])
 
     assert result.exit_code == 0, result.output
     assert APP_VERSION in result.output
@@ -112,7 +113,7 @@ def test_run(runner: CliRunner, github: MagicMock, updater: MagicMock) -> None:
 @pytest.mark.usefixtures("github")
 def test_addon_is_an_alias_for_app(runner: CliRunner, updater: MagicMock) -> None:
     """Test the deprecated --addon option still selects an app."""
-    result = runner.invoke(cli.repository_updater, [*ARGS, "--addon", "example"])
+    result = runner.invoke(cli.cli, [*ARGS, "--addon", "example"])
 
     assert result.exit_code == 0, result.output
     assert options(updater)["app_filter"] == "example"
@@ -137,7 +138,7 @@ def test_options_from_github_action_inputs(
         "INPUT_DRY_RUN": "false",
     }
 
-    result = runner.invoke(cli.repository_updater, [], env=environment)
+    result = runner.invoke(cli.cli, [], env=environment)
 
     assert result.exit_code == 0, result.output
     github.assert_called_once_with("secret")
@@ -181,7 +182,7 @@ def test_environment_precedence(
         **environment,
     }
 
-    result = runner.invoke(cli.repository_updater, [], env=environment)
+    result = runner.invoke(cli.cli, [], env=environment)
 
     assert result.exit_code == 0, result.output
     received = {**options(updater), "token": github.call_args.args[0]}
@@ -192,7 +193,7 @@ def test_environment_precedence(
 def test_command_line_beats_environment(runner: CliRunner, updater: MagicMock) -> None:
     """Test an option given on the command line wins over the environment."""
     result = runner.invoke(
-        cli.repository_updater,
+        cli.cli,
         [*ARGS, "--app", "from-argument"],
         env={"INPUT_APP": "from-environment"},
     )
@@ -201,24 +202,56 @@ def test_command_line_beats_environment(runner: CliRunner, updater: MagicMock) -
     assert options(updater)["app_filter"] == "from-argument"
 
 
+def run(args: list[str]) -> int | str | None:
+    """Run the CLI the way the console script does, and return its exit code.
+
+    The error handlers live in AsyncTyper.__call__, which the CliRunner skips.
+    """
+    with pytest.raises(SystemExit) as exit_info:
+        cli.cli(args, prog_name="repository-updater")
+    return exit_info.value.code
+
+
 def test_error_is_reported(
-    runner: CliRunner,
     github: MagicMock,
     updater: MagicMock,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Test an updater error ends the run with its message, and closes GitHub."""
     updater.return_value.run.side_effect = RepositoryUpdaterError("Kaboom")
 
-    result = runner.invoke(cli.repository_updater, ARGS)
-
-    assert result.exit_code == 1
-    assert "Error: Kaboom" in result.output
+    assert run(ARGS) == 1
+    assert "Error: Kaboom" in capsys.readouterr().out
     github.return_value.__aexit__.assert_awaited_once()
+
+
+@pytest.mark.usefixtures("github")
+def test_error_on_github_actions(
+    updater: MagicMock,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test an updater error becomes an annotation on GitHub Actions."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    updater.return_value.run.side_effect = RepositoryUpdaterError("Kaboom\nboom")
+
+    assert run(ARGS) == 1
+    assert "::error::Kaboom%0Aboom" in capsys.readouterr().out
+
+
+@pytest.mark.usefixtures("github")
+def test_other_errors_are_not_swallowed(runner: CliRunner, updater: MagicMock) -> None:
+    """Test a bug surfaces as itself instead of a tidy error message."""
+    updater.return_value.run.side_effect = ZeroDivisionError
+
+    result = runner.invoke(cli.cli, ARGS)
+
+    assert isinstance(result.exception, ZeroDivisionError)
 
 
 def test_main_module_runs_the_cli() -> None:
     """Test python -m repositoryupdater starts the same command."""
-    with patch.object(cli.repository_updater, "main", MagicMock()) as main:
+    with patch.object(cli, "cli", MagicMock()) as command:
         runpy.run_module("repositoryupdater", run_name="__main__")
 
-    main.assert_called_once()
+    command.assert_called_once_with()
