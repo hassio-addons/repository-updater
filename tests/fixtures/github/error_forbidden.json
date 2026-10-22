@@ -1,0 +1,5 @@
+{
+  "message": "Resource not accessible by personal access token",
+  "documentation_url": "https://docs.github.com/rest/git/refs#update-a-reference",
+  "status": "403"
+}

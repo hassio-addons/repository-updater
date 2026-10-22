@@ -1,0 +1,113 @@
+{
+  "sha": "2b0cc7881d1da4f356b9e722bd65498584e6d435",
+  "node_id": "C_kwDOBgJmktoAKDJiMGNjNzg4MWQxZGE0ZjM1NmI5ZTcyMmJkNjU0OTg1ODRlNmQ0MzU",
+  "commit": {
+    "author": {
+      "name": "renovate[bot]",
+      "email": "29139614+renovate[bot]@users.noreply.github.com",
+      "date": "2026-10-01T21:25:37Z"
+    },
+    "committer": {
+      "name": "GitHub",
+      "email": "noreply@github.com",
+      "date": "2026-10-01T21:25:37Z"
+    },
+    "message": "⬆️ Update ghcr.io/hassio-addons/base Docker tag to v21.0.7 (#1149)",
+    "tree": {
+      "sha": "4b80664eec790f32d65310ec6669fe0476d6c752",
+      "url": "https://api.github.com/repos/hassio-addons/app-ssh/git/trees/4b80664eec790f32d65310ec6669fe0476d6c752"
+    },
+    "url": "https://api.github.com/repos/hassio-addons/app-ssh/git/commits/2b0cc7881d1da4f356b9e722bd65498584e6d435",
+    "comment_count": 0,
+    "verification": {
+      "verified": true,
+      "reason": "valid",
+      "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJqvs/RCRC1aQ7uu5UhlAAAu1cQAJiAxmskYqeAn1oFQfDg1Kux\nmIxf8XEF50XkIiVDf20HZLWtA6zHWmwYR8J+xN/fEXooC7PiKv89Lv0ud0ycLN0+\nceiSRGY0Q1qmGN3BVhyacxiZFWqQFdynuuPp4w2HiwpzRwRDKCdc08B5tvy1/cZH\nchJHpezgbcFYmWiFrXnuTQxYBRBdKorY+gYkqaTIRXrDEf7oeOwTVQ+urSvMYFj1\nuCf+1majzeQq/QXqWgVlYPk/wSYHoqOY+z12joMel66thBpivSEp37ISNcDNjtoV\nsNkVJt6KmfROMOHJbh1DKFG1iIfufW8pZZmW88lO6fqg+APFtPeGOFCQvokj8h7G\nOzwPD91nl9M/byaLjcM1y3t5Ky8oddpP8VvMSMYos5HOIJLKNImmg6PuhwdlMaMp\n01nF5kwyWFLXQwa9Arpenc7RcQiBvEmdNXycP8UgWjmY+1SbzerCB4nxcmNDCqVS\nG2hjYZLLqmv85/I8ZXlxDevl3QXp1KWezw0j88GIj/RpUvVsw56Eejd1xlvIxE8+\net6axAbpwoxpkzBE0Kf6AeC2i8fcO/ZKaYv421MRbBOoNgR4cIL1mme+kDJwz3i6\nbKU2wc4I9iOLl+oWWufKBOV8YoOK3hQ9h7Xjrmk5jvy4yDBCztCG6BMe1Eg+VVYS\nTa52P5VSBoeALzkBh8t6\n=tPR/\n-----END PGP SIGNATURE-----\n",
+      "payload": "tree 4b80664eec790f32d65310ec6669fe0476d6c752\nparent c0fa27df7e043616195e38fa2b25e7eaed1e2bd7\nauthor renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> 1790889937 +0200\ncommitter GitHub <noreply@github.com> 1790889937 +0200\n\n⬆️ Update ghcr.io/hassio-addons/base Docker tag to v21.0.7 (#1149)",
+      "verified_at": "2026-10-01T21:25:38Z"
+    }
+  },
+  "url": "https://api.github.com/repos/hassio-addons/app-ssh/commits/2b0cc7881d1da4f356b9e722bd65498584e6d435",
+  "html_url": "https://github.com/hassio-addons/app-ssh/commit/2b0cc7881d1da4f356b9e722bd65498584e6d435",
+  "comments_url": "https://api.github.com/repos/hassio-addons/app-ssh/commits/2b0cc7881d1da4f356b9e722bd65498584e6d435/comments",
+  "author": {
+    "login": "renovate[bot]",
+    "id": 29139614,
+    "node_id": "MDM6Qm90MjkxMzk2MTQ=",
+    "avatar_url": "https://avatars.githubusercontent.com/in/2740?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/renovate%5Bbot%5D",
+    "html_url": "https://github.com/apps/renovate",
+    "followers_url": "https://api.github.com/users/renovate%5Bbot%5D/followers",
+    "following_url": "https://api.github.com/users/renovate%5Bbot%5D/following{/other_user}",
+    "gists_url": "https://api.github.com/users/renovate%5Bbot%5D/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/renovate%5Bbot%5D/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/renovate%5Bbot%5D/subscriptions",
+    "organizations_url": "https://api.github.com/users/renovate%5Bbot%5D/orgs",
+    "repos_url": "https://api.github.com/users/renovate%5Bbot%5D/repos",
+    "events_url": "https://api.github.com/users/renovate%5Bbot%5D/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/renovate%5Bbot%5D/received_events",
+    "type": "Bot",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "web-flow",
+    "id": 19864447,
+    "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+    "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/web-flow",
+    "html_url": "https://github.com/web-flow",
+    "followers_url": "https://api.github.com/users/web-flow/followers",
+    "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+    "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+    "organizations_url": "https://api.github.com/users/web-flow/orgs",
+    "repos_url": "https://api.github.com/users/web-flow/repos",
+    "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/web-flow/received_events",
+    "type": "User",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "c0fa27df7e043616195e38fa2b25e7eaed1e2bd7",
+      "url": "https://api.github.com/repos/hassio-addons/app-ssh/commits/c0fa27df7e043616195e38fa2b25e7eaed1e2bd7",
+      "html_url": "https://github.com/hassio-addons/app-ssh/commit/c0fa27df7e043616195e38fa2b25e7eaed1e2bd7"
+    }
+  ],
+  "stats": {
+    "total": 6,
+    "additions": 3,
+    "deletions": 3
+  },
+  "files": [
+    {
+      "sha": "65e8d36f6c3986705a47855636b1d997e23bc29a",
+      "filename": "ssh/Dockerfile",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "changes": 2,
+      "blob_url": "https://github.com/hassio-addons/app-ssh/blob/2b0cc7881d1da4f356b9e722bd65498584e6d435/ssh%2FDockerfile",
+      "raw_url": "https://github.com/hassio-addons/app-ssh/raw/2b0cc7881d1da4f356b9e722bd65498584e6d435/ssh%2FDockerfile",
+      "contents_url": "https://api.github.com/repos/hassio-addons/app-ssh/contents/ssh%2FDockerfile?ref=2b0cc7881d1da4f356b9e722bd65498584e6d435",
+      "patch": "@@ -1,4 +1,4 @@\n-ARG BUILD_FROM=ghcr.io/hassio-addons/base:21.0.6\n+ARG BUILD_FROM=ghcr.io/hassio-addons/base:21.0.7\n # hadolint ignore=DL3006\n FROM ${BUILD_FROM}\n "
+    },
+    {
+      "sha": "4f251e965ba46cbe3528f39b72ab90ad2720fac4",
+      "filename": "ssh/build.yaml",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 2,
+      "changes": 4,
+      "blob_url": "https://github.com/hassio-addons/app-ssh/blob/2b0cc7881d1da4f356b9e722bd65498584e6d435/ssh%2Fbuild.yaml",
+      "raw_url": "https://github.com/hassio-addons/app-ssh/raw/2b0cc7881d1da4f356b9e722bd65498584e6d435/ssh%2Fbuild.yaml",
+      "contents_url": "https://api.github.com/repos/hassio-addons/app-ssh/contents/ssh%2Fbuild.yaml?ref=2b0cc7881d1da4f356b9e722bd65498584e6d435",
+      "patch": "@@ -1,4 +1,4 @@\n ---\n build_from:\n-  aarch64: ghcr.io/hassio-addons/base:21.0.6\n-  amd64: ghcr.io/hassio-addons/base:21.0.6\n+  aarch64: ghcr.io/hassio-addons/base:21.0.7\n+  amd64: ghcr.io/hassio-addons/base:21.0.7"
+    }
+  ]
+}
