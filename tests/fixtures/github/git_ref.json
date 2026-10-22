@@ -1,0 +1,10 @@
+{
+  "ref": "refs/heads/master",
+  "node_id": "MDM6UmVmMTMxNzQ2MzIyOnJlZnMvaGVhZHMvbWFzdGVy",
+  "url": "https://api.github.com/repos/hassio-addons/repository-edge/git/refs/heads/master",
+  "object": {
+    "sha": "6f30d62e85d40c8971fd46f3508c50eba00d4c3f",
+    "type": "commit",
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/git/commits/6f30d62e85d40c8971fd46f3508c50eba00d4c3f"
+  }
+}

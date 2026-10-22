@@ -1,0 +1,84 @@
+[
+  {
+    "sha": "cbebd406f24959a681bb8d7e524b762c7ea3cf99",
+    "node_id": "C_kwDOBgJmktoAKGNiZWJkNDA2ZjI0OTU5YTY4MWJiOGQ3ZTUyNGI3NjJjN2VhM2NmOTk",
+    "commit": {
+      "author": {
+        "name": "renovate[bot]",
+        "email": "29139614+renovate[bot]@users.noreply.github.com",
+        "date": "2026-10-19T02:37:27Z"
+      },
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com",
+        "date": "2026-10-19T02:37:27Z"
+      },
+      "message": "⬆️ Update alpine_3_24/sudo to v1.9.17_p2-r2 (#1159)\n\nCo-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>",
+      "tree": {
+        "sha": "85b401f880eaac488cb5a1cc45474d87950abdca",
+        "url": "https://api.github.com/repos/hassio-addons/app-ssh/git/trees/85b401f880eaac488cb5a1cc45474d87950abdca"
+      },
+      "url": "https://api.github.com/repos/hassio-addons/app-ssh/git/commits/cbebd406f24959a681bb8d7e524b762c7ea3cf99",
+      "comment_count": 0,
+      "verification": {
+        "verified": true,
+        "reason": "valid",
+        "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJq1YJnCRC1aQ7uu5UhlAAAL8cQAGNeoq0xBim+WJg44mu/BydP\nlmp/bLAC3lIGU4VfY8xhPPuyw9myULP7al49XVufGgKw94Ux0AKZTRVywEKLVjSX\nekgOyEWWUxVOueEoZosyE2G6cOh/YGTNgpN8PjHcxnGRY5AaaUXP+yISCtVZpSTf\ne3Y5U7Rge1mA+dI787AZdGFbTOgtOOoehbigLQKvhzslBWjvlpBKFJmJHv2GIV8W\nwLNbkTIexWZpoPkt0eA9A0PQNa57QDF0p0A442NRQUZ6F+t/0QJ3qA4FWMiEA2e+\nC/1dBqWn0OYT4VEiJ/EgIwHvOnGhPPhRJ1YzCyaIXIcbD/sMP7FqTmwDLELj/m/H\nudk+Cc8Gl1NAEAf6TxLDiwqCrFDApAFd6Yi9aT70bwd0xSGON4YNRA2D3sxEipFG\nI1XlPe+FZi2dSMiCLbRnfB90/gThKsi1HRcMAXLqW5k4SXpEgy4uZL7L5YdXexS/\nCFI2YAbso1f95lVHHtxipj+lObctR3tGXDmQDCiAJEfV82K4kP/71ziwRHGWtL0v\na93xC6NcgOOuK+So2LOW8SrQwpOYiJTCEoyq7z9xATqW4J/ZMZQPutjRlbSpZldJ\nbtj4i5WIaZbCDAAcybbOO6p/O/ZsD02IsFv+1RIDd7T/qmNylxIcgW7+vy3kiwBU\nhCFKutP9ERGLfMSsUSdN\n=jYRM\n-----END PGP SIGNATURE-----\n",
+        "payload": "tree 85b401f880eaac488cb5a1cc45474d87950abdca\nparent 072c7dba8e44a69cb9280466beafbedda78beb77\nauthor renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> 1792377447 +0000\ncommitter GitHub <noreply@github.com> 1792377447 +0000\n\n⬆️ Update alpine_3_24/sudo to v1.9.17_p2-r2 (#1159)\n\nCo-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>",
+        "verified_at": "2026-10-19T02:37:27Z"
+      }
+    },
+    "url": "https://api.github.com/repos/hassio-addons/app-ssh/commits/cbebd406f24959a681bb8d7e524b762c7ea3cf99",
+    "html_url": "https://github.com/hassio-addons/app-ssh/commit/cbebd406f24959a681bb8d7e524b762c7ea3cf99",
+    "comments_url": "https://api.github.com/repos/hassio-addons/app-ssh/commits/cbebd406f24959a681bb8d7e524b762c7ea3cf99/comments",
+    "author": {
+      "login": "renovate[bot]",
+      "id": 29139614,
+      "node_id": "MDM6Qm90MjkxMzk2MTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/in/2740?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/renovate%5Bbot%5D",
+      "html_url": "https://github.com/apps/renovate",
+      "followers_url": "https://api.github.com/users/renovate%5Bbot%5D/followers",
+      "following_url": "https://api.github.com/users/renovate%5Bbot%5D/following{/other_user}",
+      "gists_url": "https://api.github.com/users/renovate%5Bbot%5D/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/renovate%5Bbot%5D/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/renovate%5Bbot%5D/subscriptions",
+      "organizations_url": "https://api.github.com/users/renovate%5Bbot%5D/orgs",
+      "repos_url": "https://api.github.com/users/renovate%5Bbot%5D/repos",
+      "events_url": "https://api.github.com/users/renovate%5Bbot%5D/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/renovate%5Bbot%5D/received_events",
+      "type": "Bot",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "web-flow",
+      "id": 19864447,
+      "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/web-flow",
+      "html_url": "https://github.com/web-flow",
+      "followers_url": "https://api.github.com/users/web-flow/followers",
+      "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+      "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+      "organizations_url": "https://api.github.com/users/web-flow/orgs",
+      "repos_url": "https://api.github.com/users/web-flow/repos",
+      "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/web-flow/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "072c7dba8e44a69cb9280466beafbedda78beb77",
+        "url": "https://api.github.com/repos/hassio-addons/app-ssh/commits/072c7dba8e44a69cb9280466beafbedda78beb77",
+        "html_url": "https://github.com/hassio-addons/app-ssh/commit/072c7dba8e44a69cb9280466beafbedda78beb77"
+      }
+    ]
+  }
+]

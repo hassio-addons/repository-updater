@@ -14,8 +14,8 @@ import click
 
 from . import APP_FULL_NAME, APP_VERSION
 from .exceptions import RepositoryUpdaterError
-from .github import GitHub
 from .output import Output
+from .pygithub import GitHub
 from .repository import Repository
 
 

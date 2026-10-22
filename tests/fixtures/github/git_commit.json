@@ -1,0 +1,35 @@
+{
+  "sha": "6f30d62e85d40c8971fd46f3508c50eba00d4c3f",
+  "node_id": "C_kwDOB9pKEtoAKDZmMzBkNjJlODVkNDBjODk3MWZkNDZmMzUwOGM1MGViYTAwZDRjM2Y",
+  "url": "https://api.github.com/repos/hassio-addons/repository-edge/git/commits/6f30d62e85d40c8971fd46f3508c50eba00d4c3f",
+  "html_url": "https://github.com/hassio-addons/repository-edge/commit/6f30d62e85d40c8971fd46f3508c50eba00d4c3f",
+  "author": {
+    "name": "Community Hass.io Add-ons Bot",
+    "email": "bot@addons.community",
+    "date": "2026-10-22T03:30:53Z"
+  },
+  "committer": {
+    "name": "Community Hass.io Add-ons Bot",
+    "email": "bot@addons.community",
+    "date": "2026-10-22T03:30:53Z"
+  },
+  "tree": {
+    "sha": "a45204440e05792e1bdba9853f65ec3c0a0af7f9",
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/git/trees/a45204440e05792e1bdba9853f65ec3c0a0af7f9"
+  },
+  "message": ":arrow_up: Updating app Spotweb to 4243c50",
+  "parents": [
+    {
+      "sha": "c16e806802ff89ffad6288728a4aa2a1cfea900d",
+      "url": "https://api.github.com/repos/hassio-addons/repository-edge/git/commits/c16e806802ff89ffad6288728a4aa2a1cfea900d",
+      "html_url": "https://github.com/hassio-addons/repository-edge/commit/c16e806802ff89ffad6288728a4aa2a1cfea900d"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  }
+}

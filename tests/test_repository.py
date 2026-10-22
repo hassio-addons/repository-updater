@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 from github.GithubException import UnknownObjectException
+
 from repositoryupdater import repository as repository_module
 from repositoryupdater.exceptions import (
     InvalidChannelError,

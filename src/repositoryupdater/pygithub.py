@@ -1,8 +1,7 @@
 """
-GitHub module.
+PyGithub wrapper that can clone with the token.
 
-This module extends the main PyGitHub class in order to add some extra
-functionality.
+On its way out: the asynchronous client in the github package replaces it.
 """
 
 from __future__ import annotations

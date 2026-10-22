@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+
 from repositoryupdater.app import AppConfig, _is_prerelease
 from repositoryupdater.const import CHANNEL_BETA, CHANNEL_EDGE, CHANNEL_STABLE
 from repositoryupdater.exceptions import AppReleaseNotFoundError

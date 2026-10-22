@@ -1,0 +1,146 @@
+[
+  {
+    "name": "CODEOWNERS",
+    "path": ".github/CODEOWNERS",
+    "sha": "771559adf8407cfcc78df68c3f6af57dd41fc955",
+    "size": 18,
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/CODEOWNERS?ref=master",
+    "html_url": "https://github.com/hassio-addons/repository-edge/blob/master/.github/CODEOWNERS",
+    "git_url": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/771559adf8407cfcc78df68c3f6af57dd41fc955",
+    "download_url": "https://raw.githubusercontent.com/hassio-addons/repository-edge/master/.github/CODEOWNERS",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/CODEOWNERS?ref=master",
+      "git": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/771559adf8407cfcc78df68c3f6af57dd41fc955",
+      "html": "https://github.com/hassio-addons/repository-edge/blob/master/.github/CODEOWNERS"
+    }
+  },
+  {
+    "name": "CODE_OF_CONDUCT.md",
+    "path": ".github/CODE_OF_CONDUCT.md",
+    "sha": "c124302fbcfa5573a473d1cb30ddd8dd8ea969eb",
+    "size": 8509,
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/CODE_OF_CONDUCT.md?ref=master",
+    "html_url": "https://github.com/hassio-addons/repository-edge/blob/master/.github/CODE_OF_CONDUCT.md",
+    "git_url": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/c124302fbcfa5573a473d1cb30ddd8dd8ea969eb",
+    "download_url": "https://raw.githubusercontent.com/hassio-addons/repository-edge/master/.github/CODE_OF_CONDUCT.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/CODE_OF_CONDUCT.md?ref=master",
+      "git": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/c124302fbcfa5573a473d1cb30ddd8dd8ea969eb",
+      "html": "https://github.com/hassio-addons/repository-edge/blob/master/.github/CODE_OF_CONDUCT.md"
+    }
+  },
+  {
+    "name": "CONTRIBUTING.md",
+    "path": ".github/CONTRIBUTING.md",
+    "sha": "dc9084b3f2591f91c6b494fb85ad7c6e194c2235",
+    "size": 1178,
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/CONTRIBUTING.md?ref=master",
+    "html_url": "https://github.com/hassio-addons/repository-edge/blob/master/.github/CONTRIBUTING.md",
+    "git_url": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/dc9084b3f2591f91c6b494fb85ad7c6e194c2235",
+    "download_url": "https://raw.githubusercontent.com/hassio-addons/repository-edge/master/.github/CONTRIBUTING.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/CONTRIBUTING.md?ref=master",
+      "git": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/dc9084b3f2591f91c6b494fb85ad7c6e194c2235",
+      "html": "https://github.com/hassio-addons/repository-edge/blob/master/.github/CONTRIBUTING.md"
+    }
+  },
+  {
+    "name": "FUNDING.yml",
+    "path": ".github/FUNDING.yml",
+    "sha": "7f95bd45614f0bf56f3c17d201cc5d2dc2af19b2",
+    "size": 70,
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/FUNDING.yml?ref=master",
+    "html_url": "https://github.com/hassio-addons/repository-edge/blob/master/.github/FUNDING.yml",
+    "git_url": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/7f95bd45614f0bf56f3c17d201cc5d2dc2af19b2",
+    "download_url": "https://raw.githubusercontent.com/hassio-addons/repository-edge/master/.github/FUNDING.yml",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/FUNDING.yml?ref=master",
+      "git": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/7f95bd45614f0bf56f3c17d201cc5d2dc2af19b2",
+      "html": "https://github.com/hassio-addons/repository-edge/blob/master/.github/FUNDING.yml"
+    }
+  },
+  {
+    "name": "ISSUE_TEMPLATE.md",
+    "path": ".github/ISSUE_TEMPLATE.md",
+    "sha": "544da8f5300c3cdba0fd1ae04361cc944f499c84",
+    "size": 332,
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/ISSUE_TEMPLATE.md?ref=master",
+    "html_url": "https://github.com/hassio-addons/repository-edge/blob/master/.github/ISSUE_TEMPLATE.md",
+    "git_url": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/544da8f5300c3cdba0fd1ae04361cc944f499c84",
+    "download_url": "https://raw.githubusercontent.com/hassio-addons/repository-edge/master/.github/ISSUE_TEMPLATE.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/ISSUE_TEMPLATE.md?ref=master",
+      "git": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/544da8f5300c3cdba0fd1ae04361cc944f499c84",
+      "html": "https://github.com/hassio-addons/repository-edge/blob/master/.github/ISSUE_TEMPLATE.md"
+    }
+  },
+  {
+    "name": "PULL_REQUEST_TEMPLATE.md",
+    "path": ".github/PULL_REQUEST_TEMPLATE.md",
+    "sha": "cbd529abb151e5560c6aaf29257bfdd81335900a",
+    "size": 253,
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/PULL_REQUEST_TEMPLATE.md?ref=master",
+    "html_url": "https://github.com/hassio-addons/repository-edge/blob/master/.github/PULL_REQUEST_TEMPLATE.md",
+    "git_url": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/cbd529abb151e5560c6aaf29257bfdd81335900a",
+    "download_url": "https://raw.githubusercontent.com/hassio-addons/repository-edge/master/.github/PULL_REQUEST_TEMPLATE.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/PULL_REQUEST_TEMPLATE.md?ref=master",
+      "git": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/cbd529abb151e5560c6aaf29257bfdd81335900a",
+      "html": "https://github.com/hassio-addons/repository-edge/blob/master/.github/PULL_REQUEST_TEMPLATE.md"
+    }
+  },
+  {
+    "name": "SECURITY.md",
+    "path": ".github/SECURITY.md",
+    "sha": "3cf65d4e1d0f02683cbd248c576ed2896be3e02f",
+    "size": 810,
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/SECURITY.md?ref=master",
+    "html_url": "https://github.com/hassio-addons/repository-edge/blob/master/.github/SECURITY.md",
+    "git_url": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/3cf65d4e1d0f02683cbd248c576ed2896be3e02f",
+    "download_url": "https://raw.githubusercontent.com/hassio-addons/repository-edge/master/.github/SECURITY.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/SECURITY.md?ref=master",
+      "git": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/3cf65d4e1d0f02683cbd248c576ed2896be3e02f",
+      "html": "https://github.com/hassio-addons/repository-edge/blob/master/.github/SECURITY.md"
+    }
+  },
+  {
+    "name": "renovate.json",
+    "path": ".github/renovate.json",
+    "sha": "da22394c16f2c96f757274ccedea78474f2d7551",
+    "size": 577,
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/renovate.json?ref=master",
+    "html_url": "https://github.com/hassio-addons/repository-edge/blob/master/.github/renovate.json",
+    "git_url": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/da22394c16f2c96f757274ccedea78474f2d7551",
+    "download_url": "https://raw.githubusercontent.com/hassio-addons/repository-edge/master/.github/renovate.json",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/renovate.json?ref=master",
+      "git": "https://api.github.com/repos/hassio-addons/repository-edge/git/blobs/da22394c16f2c96f757274ccedea78474f2d7551",
+      "html": "https://github.com/hassio-addons/repository-edge/blob/master/.github/renovate.json"
+    }
+  },
+  {
+    "name": "workflows",
+    "path": ".github/workflows",
+    "sha": "7f051e6df847869940ec08814e9e8022b679870c",
+    "size": 0,
+    "url": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/workflows?ref=master",
+    "html_url": "https://github.com/hassio-addons/repository-edge/tree/master/.github/workflows",
+    "git_url": "https://api.github.com/repos/hassio-addons/repository-edge/git/trees/7f051e6df847869940ec08814e9e8022b679870c",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/hassio-addons/repository-edge/contents/.github/workflows?ref=master",
+      "git": "https://api.github.com/repos/hassio-addons/repository-edge/git/trees/7f051e6df847869940ec08814e9e8022b679870c",
+      "html": "https://github.com/hassio-addons/repository-edge/tree/master/.github/workflows"
+    }
+  }
+]

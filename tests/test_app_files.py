@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 
 import pytest
 import yaml
-from repositoryupdater.app import App
+
 from repositoryupdater.exceptions import AppConfigNotFoundError, AppNotUpdatingError
 
 from .conftest import commit, mocked
@@ -21,6 +21,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from syrupy.assertion import SnapshotAssertion
+
+    from repositoryupdater.app import App
 
     from .conftest import AppFactory
 

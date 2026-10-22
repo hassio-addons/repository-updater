@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
+
 from repositoryupdater.app import App, AppConfig
 from repositoryupdater.const import CHANNEL_STABLE
 

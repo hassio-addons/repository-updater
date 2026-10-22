@@ -24,8 +24,8 @@ if TYPE_CHECKING:
     from git import Repo
     from github.Repository import Repository as GitHubRepository
 
-    from .github import GitHub
     from .output import Output
+    from .pygithub import GitHub
 
 
 class Repository:

@@ -1,0 +1,44 @@
+# serializer version: 1
+# name: test_commit
+  Commit(
+    date=datetime.datetime(2026, 10, 1, 21, 25, 37, tzinfo=datetime.timezone.utc),
+    message='⬆️ Update ghcr.io/hassio-addons/base Docker tag to v21.0.7 (#1149)',
+    sha='2b0cc7881d1da4f356b9e722bd65498584e6d435',
+  )
+# ---
+# name: test_releases
+  Release(
+    body='''
+      ## What’s changed
+      
+      ## ⬆️ Dependency updates
+      
+      - ⬆️ Update OpenSSL to v3.5.9-r0 @[renovate[bot]](https://github.com/apps/renovate) ([#1148](https://github.com/hassio-addons/app-ssh/pull/1148))
+      - ⬆️ Update Python to v3.14.8-r0 @[renovate[bot]](https://github.com/apps/renovate) ([#1150](https://github.com/hassio-addons/app-ssh/pull/1150))
+      - ⬆️ Update Docker to v29.8.2-r0 @[renovate[bot]](https://github.com/apps/renovate) ([#1151](https://github.com/hassio-addons/app-ssh/pull/1151))
+      - ⬆️ Update ghcr.io/hassio-addons/base Docker tag to v21.0.7 @[renovate[bot]](https://github.com/apps/renovate) ([#1149](https://github.com/hassio-addons/app-ssh/pull/1149))
+  
+    ''',
+    created_at=datetime.datetime(2026, 10, 1, 21, 25, 37, tzinfo=datetime.timezone.utc),
+    draft=False,
+    prerelease=False,
+    tag_name='v24.1.7',
+  )
+# ---
+# name: test_repository
+  Repository(
+    default_branch='main',
+    description='Advanced SSH & Web Terminal - Home Assistant Community Apps',
+    full_name='hassio-addons/app-ssh',
+    homepage='',
+    html_url='https://github.com/hassio-addons/app-ssh',
+  )
+# ---
+# name: test_user
+  User(
+    email=None,
+    id=583231,
+    login='octocat',
+    name='The Octocat',
+  )
+# ---

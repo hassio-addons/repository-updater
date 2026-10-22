@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
+
 from repositoryupdater import APP_VERSION, cli
 from repositoryupdater.exceptions import RepositoryUpdaterError
 

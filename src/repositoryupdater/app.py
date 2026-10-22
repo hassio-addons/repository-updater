@@ -34,8 +34,8 @@ if TYPE_CHECKING:
     from github.GitRelease import GitRelease
     from github.Repository import Repository as GitHubRepository
 
-    from .github import GitHub
     from .output import Output
+    from .pygithub import GitHub
 
 STATIC_FILES = (
     "logo.png",
