@@ -15,6 +15,7 @@ from repositoryupdater.render import (
     README_COMMIT_MESSAGE,
     app_template_data,
     commit_message,
+    prepend_changelog,
     render_changelog,
     render_template,
     repository_template_data,
@@ -205,3 +206,87 @@ def test_commit_message(
 def test_readme_commit_message() -> None:
     """Test the README commit message stays what apps repositories know."""
     assert README_COMMIT_MESSAGE == ":books: Updated README"
+
+
+def test_prepend_to_empty_changelog() -> None:
+    """Test the first notes of an app become its first section."""
+    changelog = prepend_changelog("", "- First", version="1.0.0", previous_version=None)
+
+    assert changelog == "## 1.0.0\n\n- First\n"
+
+
+def test_prepend_above_newest_version() -> None:
+    """Test new notes go above the newest version, below the introduction."""
+    existing = "# Changelog\n\nAll notable changes.\n\n## 1.0.0\n\n- First\n"
+
+    changelog = prepend_changelog(
+        existing, "- Second", version="1.1.0", previous_version="1.0.0"
+    )
+
+    assert changelog == (
+        "# Changelog\n\nAll notable changes.\n\n"
+        "## 1.1.0\n\n- Second\n\n"
+        "## 1.0.0\n\n- First\n"
+    )
+
+
+def test_prepend_after_replace_mode() -> None:
+    """Test notes left by replace mode get filed under their own version.
+
+    Without that, they would read as part of the new release.
+    """
+    existing = "## What's changed\n\n- First\n"
+
+    changelog = prepend_changelog(
+        existing,
+        "## What's changed\n\n- Second",
+        version="1.1.0",
+        previous_version="1.0.0",
+    )
+
+    assert changelog == (
+        "## 1.1.0\n\n## What's changed\n\n- Second\n\n"
+        "## 1.0.0\n\n## What's changed\n\n- First\n"
+    )
+
+
+def test_prepend_below_title_without_versions() -> None:
+    """Test a title without any version yet stays on top."""
+    changelog = prepend_changelog(
+        "# Changelog\n", "- First", version="1.0.0", previous_version=None
+    )
+
+    assert changelog == "# Changelog\n\n## 1.0.0\n\n- First\n"
+
+
+def test_prepend_rerun_replaces_own_section() -> None:
+    """Test a rerun replaces the section of its version, keeping the older ones."""
+    existing = "## 1.1.0\n\n- Old\n\n## 1.0.0 (2025-09-01)\n\n- First\n"
+
+    changelog = prepend_changelog(
+        existing, "- Fixed", version="1.1.0", previous_version="1.1.0"
+    )
+
+    assert changelog == "## 1.1.0\n\n- Fixed\n\n## 1.0.0 (2025-09-01)\n\n- First\n"
+
+
+def test_prepend_rerun_without_older_versions() -> None:
+    """Test a rerun on the only version replaces it entirely."""
+    changelog = prepend_changelog(
+        "## 1.0.0\n\n- Old\n", "- Fixed", version="1.0.0", previous_version="1.0.0"
+    )
+
+    assert changelog == "## 1.0.0\n\n- Fixed\n"
+
+
+def test_prepend_ignores_numbered_headings() -> None:
+    """Test a numbered heading in the notes is not taken for a version."""
+    existing = "## 1.0.0\n\n## 2. Known limitations\n\n- Slow\n"
+
+    changelog = prepend_changelog(
+        existing, "- Faster", version="1.1.0", previous_version="1.0.0"
+    )
+
+    assert changelog == (
+        "## 1.1.0\n\n- Faster\n\n## 1.0.0\n\n## 2. Known limitations\n\n- Slow\n"
+    )

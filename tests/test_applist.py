@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from repositoryupdater.applist import AppEntry, Channel, parse_app_list
+from repositoryupdater.applist import AppEntry, ChangelogMode, Channel, parse_app_list
 from repositoryupdater.exceptions import InvalidAppListError, InvalidChannelError
 
 from .conftest import load_fixture
@@ -116,3 +116,20 @@ def test_unknown_channel() -> None:
     """Test an unknown channel is named in the error."""
     with pytest.raises(InvalidChannelError, match='"nightly"'):
         parse_app_list(".apps.yml", b"channel: nightly\napps: {}")
+
+
+def test_changelog_mode() -> None:
+    """Test the changelog replaces by default, and prepends when asked."""
+    assert parse_app_list(".apps.yml", b"channel: stable").changelog is (
+        ChangelogMode.REPLACE
+    )
+    assert (
+        parse_app_list(".apps.yml", b"channel: stable\nchangelog: prepend").changelog
+        is ChangelogMode.PREPEND
+    )
+
+
+def test_unknown_changelog_mode() -> None:
+    """Test an unknown changelog mode names the ones there are."""
+    with pytest.raises(InvalidAppListError, match="must be one of replace, prepend"):
+        parse_app_list(".apps.yml", b"channel: stable\nchangelog: append")

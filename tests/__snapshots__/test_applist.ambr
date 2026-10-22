@@ -375,6 +375,7 @@
         repository_target='zwave-js-ui',
       ),
     ]),
+    changelog=<ChangelogMode.REPLACE: 'replace'>,
     channel=<Channel.BETA: 'beta'>,
   )
 # ---
@@ -766,6 +767,7 @@
         repository_target='zwave-js-ui',
       ),
     ]),
+    changelog=<ChangelogMode.REPLACE: 'replace'>,
     channel=<Channel.EDGE: 'edge'>,
   )
 # ---
@@ -1145,6 +1147,7 @@
         repository_target='zwave-js-ui',
       ),
     ]),
+    changelog=<ChangelogMode.REPLACE: 'replace'>,
     channel=<Channel.STABLE: 'stable'>,
   )
 # ---

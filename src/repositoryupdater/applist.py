@@ -23,6 +23,15 @@ class Channel(StrEnum):
     EDGE = "edge"
 
 
+class ChangelogMode(StrEnum):
+    """What a release does to the CHANGELOG.md of an app."""
+
+    # The changelog holds the notes of the newest release only.
+    REPLACE = "replace"
+    # Every release adds its notes on top, under a heading of its version.
+    PREPEND = "prepend"
+
+
 @dataclass(frozen=True, kw_only=True)
 class AppEntry(DataClassDictMixin):
     """One app in the list: where it lives, and where it goes."""
@@ -42,6 +51,7 @@ class AppList(DataClassDictMixin):
 
     channel: Channel
     apps: list[AppEntry]
+    changelog: ChangelogMode = ChangelogMode.REPLACE
 
     @classmethod
     def __pre_deserialize__(cls, d: dict[Any, Any]) -> dict[Any, Any]:
@@ -74,11 +84,24 @@ def parse_app_list(filename: str, content: bytes) -> AppList:
     if data["channel"] not in set(Channel):
         raise InvalidChannelError(str(data["channel"]))
 
-    apps = data.get("apps", data.get("addons"))
-    if apps is not None and not isinstance(apps, dict):
+    if data.get("changelog", ChangelogMode.REPLACE) not in set(ChangelogMode):
+        modes = ", ".join(ChangelogMode)
+        msg = f'"changelog" must be one of {modes}'
+        raise InvalidAppListError(filename, msg)
+
+    _check_apps(filename, data.get("apps", data.get("addons")))
+    return AppList.from_dict(data)
+
+
+def _check_apps(filename: str, apps: object) -> None:
+    """Reject apps the app list does not describe completely."""
+    if apps is None:
+        return
+
+    if not isinstance(apps, dict):
         raise InvalidAppListError(filename, "its apps are not a mapping")
 
-    for target, app in (apps or {}).items():
+    for target, app in apps.items():
         if not isinstance(app, dict):
             msg = f'app "{target}" is not a mapping'
             raise InvalidAppListError(filename, msg)
@@ -87,5 +110,3 @@ def parse_app_list(filename: str, content: bytes) -> AppList:
             if key not in app:
                 msg = f'app "{target}" is missing "{key}"'
                 raise InvalidAppListError(filename, msg)
-
-    return AppList.from_dict(data)

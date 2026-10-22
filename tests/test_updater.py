@@ -388,6 +388,38 @@ async def test_without_readme_template(
     assert "README.md" not in github.commits[0].files
 
 
+async def test_prepend_changelog(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test prepend mode keeps the earlier notes, filed under their version."""
+    apps_repository.files[".apps.yml"] = APP_LIST + b"changelog: prepend\n"
+    apps_repository.files["example/CHANGELOG.md"] = b"Notes"
+
+    await updater(FakeGitHub(apps_repository, app_repository)).run()
+
+    assert apps_repository.files["example/CHANGELOG.md"] == (
+        "## 1.1.0\n\n🎉 Shiny\n\n## 1.0.0\n\nNotes\n".encode()
+    )
+
+
+async def test_prepend_changelog_of_an_edge_commit(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test a commit published on edge still replaces the changelog."""
+    apps_repository.files[".apps.yml"] = (
+        APP_LIST.replace(b"stable", b"edge") + b"changelog: prepend\n"
+    )
+    apps_repository.files["example/CHANGELOG.md"] = b"## 1.0.0\n\nNotes\n"
+    app_repository.publish("3" * 40, app_repository.snapshots["2" * 40])
+    app_repository.compares[("v1.1.0", "3" * 40)] = [commit("3" * 40, "Newer")]
+
+    await updater(FakeGitHub(apps_repository, app_repository)).run()
+
+    assert apps_repository.files["example/CHANGELOG.md"] == (
+        b"# Changelog since v1.1.0\n- Newer \n"
+    )
+
+
 async def test_edge_publishes_a_commit(
     apps_repository: FakeRepository, app_repository: FakeRepository
 ) -> None:
