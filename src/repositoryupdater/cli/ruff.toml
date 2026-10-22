@@ -1,0 +1,7 @@
+# This extends our general Ruff rules specifically for the CLI.
+extend = "../../../pyproject.toml"
+
+lint.extend-ignore = [
+  "FBT001", # Typer options are function arguments, flags included
+  "FBT002", # Typer options are function arguments, flags included
+]

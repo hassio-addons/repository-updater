@@ -1,24 +1,27 @@
 # serializer version: 1
 # name: test_help
   '''
-  Usage: repository-updater [OPTIONS]
+                                                                                                      
+   Usage: repository-updater [OPTIONS]                                                                
+                                                                                                      
+   Bring a Home Assistant Apps repository up to date with its apps.                                   
+                                                                                                      
+  ╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
+  │ *  --token              TOKEN       GitHub access token. [env var: INPUT_TOKEN, GITHUB_TOKEN]    │
+  │                                     [required]                                                   │
+  │ *  --repository         OWNER/NAME  The Home Assistant Apps repository to update.                │
+  │                                     [env var: INPUT_REPOSITORY, GITHUB_REPOSITORY]               │
+  │                                     [required]                                                   │
+  │    --app,--addon        APP         Update a single app. --addon is the deprecated name.         │
+  │                                     [env var: INPUT_APP, INPUT_ADDON]                            │
+  │    --force                          Update apps even when they look up to date.                  │
+  │                                     [env var: INPUT_FORCE]                                       │
+  │    --dry-run                        Show what would be committed, without committing.            │
+  │                                     [env var: INPUT_DRY_RUN]                                     │
+  │    --version                        Show the version and exit.                                   │
+  │    --help                           Show this message and exit.                                  │
+  ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
   
-    Home Assistant Community Apps Repository Updater.
-  
-  Options:
-    --token <TOKEN>                 GitHub access token  [env var: INPUT_TOKEN,
-                                    GITHUB_TOKEN]
-    --repository <orgname/reponame>
-                                    The Home Assistant Apps repository to update
-                                    [env var: INPUT_REPOSITORY, GITHUB_REPOSITORY]
-    --app, --addon <TARGET>         Update a single/specific app  [env var:
-                                    INPUT_APP, INPUT_ADDON]
-    --force                         Force an update of the app repository  [env
-                                    var: INPUT_FORCE]
-    --dry-run                       Show what would be committed, without
-                                    committing  [env var: INPUT_DRY_RUN]
-    --version                       Show the version and exit.
-    --help                          Show this message and exit.
   
   '''
 # ---

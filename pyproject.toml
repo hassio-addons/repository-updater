@@ -39,12 +39,13 @@ dependencies = [
   "aiohttp>=3.14.5,<4",
   # Versioned by date, so a major bump is just a new year: no upper bound.
   "awesomeversion>=25.8.0",
-  "click>=8.5.0,<9",
   "emoji>=2.16.0,<3",
   "Jinja2>=3.1.6,<4",
   "mashumaro>=3.23,<4",
   "orjson>=3.13.0,<4",
   "PyYAML>=6.0.3,<7",
+  "rich>=15.0.0,<16",
+  "typer>=0.27.3,<1",
   "yarl>=1.25.1,<2",
 ]
 
@@ -54,7 +55,7 @@ Source = "https://github.com/hassio-addons/repository-updater"
 Issues = "https://github.com/hassio-addons/repository-updater/issues"
 
 [project.scripts]
-repository-updater = "repositoryupdater.cli:repository_updater"
+repository-updater = "repositoryupdater.cli:cli"
 
 [dependency-groups]
 # Pinned exactly for reproducible local and CI runs. CI installs this group
