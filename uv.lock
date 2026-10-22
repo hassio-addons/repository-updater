@@ -204,6 +204,15 @@ wheels = [
 ]
 
 [[package]]
+name = "awesomeversion"
+version = "25.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4e/3a/c97ef69b8209aa9d7209b143345fe49c1e20126f62a775038ab6dcd78fd5/awesomeversion-25.8.0.tar.gz", hash = "sha256:e6cd08c90292a11f30b8de401863dcde7bc66a671d8173f9066ebd15d9310453", size = 70873, upload-time = "2025-08-03T08:54:07.854Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/b3/c6be343010721bfdd3058b708eb4868fa1a207534a3b6c80de74d35fb568/awesomeversion-25.8.0-py3-none-any.whl", hash = "sha256:1c314683abfcc3e26c62af9e609b585bbcbf2ec19568df2f60ff1034fb1dae28", size = 15919, upload-time = "2025-08-03T08:54:06.265Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2026.10.19"
 source = { registry = "https://pypi.org/simple" }
@@ -1530,6 +1539,7 @@ version = "0.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
+    { name = "awesomeversion" },
     { name = "click" },
     { name = "emoji" },
     { name = "gitpython" },
@@ -1566,6 +1576,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.14.5,<4" },
+    { name = "awesomeversion", specifier = ">=25.8.0" },
     { name = "click", specifier = ">=8.5.0,<9" },
     { name = "emoji", specifier = ">=2.16.0,<3" },
     { name = "gitpython", specifier = ">=3.2.1,<4" },

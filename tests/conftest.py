@@ -16,6 +16,13 @@ from repositoryupdater.const import CHANNEL_STABLE
 
 AppFactory = Callable[..., App]
 
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def load_fixture(name: str) -> bytes:
+    """Return a recorded fixture, by its path below tests/fixtures."""
+    return (FIXTURES / name).read_bytes()
+
 
 def release(tag: str, *, draft: bool = False, prerelease: bool = False) -> MagicMock:
     """Return a stand-in for a GitHub release."""
