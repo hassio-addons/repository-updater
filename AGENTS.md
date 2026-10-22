@@ -123,11 +123,18 @@ See [AI_POLICY.md](AI_POLICY.md) for the contribution policy around AI tooling.
 Releases are immutable: once published, a release and its tag never change.
 So nothing gets published by hand. Release-drafter keeps a draft with the
 next version; the release pull request points `action.yaml` at that version
-(`docker://ghcr.io/hassio-addons/repository-updater:<version>`); then the
-Release workflow, started with "Run workflow" on `main`, checks the draft and
-`action.yaml`, builds, publishes the draft at that exact commit, and only
-then pushes to PyPI and GHCR. Every tag is an exact version; nothing like
-`v3` or `latest` moves along.
+(`docker://ghcr.io/hassio-addons/repository-updater:<version>`). Then the
+Release workflow, started with "Run workflow" on `main`:
+
+1. checks that every workflow run on that commit passed, that there is one
+   draft whose tag does not exist yet, and that `action.yaml` points at it;
+2. builds the package;
+3. pushes the image to GHCR, so the release never points at a missing one;
+4. publishes the draft, with its tag on that very commit;
+5. publishes the package to PyPI.
+
+A job that fails after the release is published can simply be re-run. Every
+tag is an exact version; nothing like `v3` or `latest` moves along.
 
 ## Where to read next
 

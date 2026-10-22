@@ -6,14 +6,24 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+# One draft at a time: two quick merges racing could end up with two drafts,
+# and the release workflow only releases a single one.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 jobs:
   update_release_draft:
     name: ✏️ Draft release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Update the release draft
+      pull-requests: read # Read the labels of the merged pull requests
     steps:
       - name: 🚀 Run Release Drafter
         uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0 # v7.10.0

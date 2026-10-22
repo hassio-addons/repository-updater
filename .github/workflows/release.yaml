@@ -64,6 +64,29 @@ jobs:
             echo "tag=${tag}"
             echo "version=${version#v}"
           } >> "${GITHUB_OUTPUT}"
+      # Only a commit that passed every check on main gets released.
+      - name: 🔍 Check the commit passed its checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          runs=$(gh api "repos/${REPOSITORY}/actions/runs?head_sha=${COMMIT}&event=push" \
+            --paginate --jq '.workflow_runs[] | [.name, .status, .conclusion] | @tsv')
+          if ! grep --quiet "^Testing"$'\t' <<< "${runs}"; then
+            echo "::error::No test run found for ${COMMIT}"
+            exit 1
+          fi
+
+          failed=0
+          while IFS=$'\t' read -r name status conclusion; do
+            if [[ "${status}" != "completed" ]] \
+              || [[ "${conclusion}" != "success" && "${conclusion}" != "skipped" ]]; then
+              echo "::error::${name} is ${conclusion:-${status}} for ${COMMIT}"
+              failed=1
+            fi
+          done <<< "${runs}"
+          exit "${failed}"
       # The action runs the image of its own release. Checked before anything
       # gets published: a published release can never be changed.
       - name: 🔍 Check the action uses this release
@@ -132,9 +155,11 @@ jobs:
   release:
     name: Publish the release
     runs-on: ubuntu-latest
+    # Only once the image exists: the release is immutable the moment it is
+    # published, and its action.yaml points at that image.
     needs:
       - prepare
-      - build
+      - image
     permissions:
       contents: write # Publish the release draft
     steps:
@@ -177,11 +202,9 @@ jobs:
   image:
     name: Publish image to GHCR
     runs-on: ubuntu-latest
-    # Only once the package is on PyPI, so an image never exists for a
-    # version that failed to publish.
     needs:
       - prepare
-      - pypi
+      - build
     permissions:
       contents: read
       packages: write # Push the image to GHCR
