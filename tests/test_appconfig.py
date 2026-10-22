@@ -92,3 +92,27 @@ def test_render_config_as_json(snapshot: SnapshotAssertion) -> None:
 
     assert published == snapshot
     assert "Café" in published
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["58899e0", "1e5", "1234567", "0x1F", "true", "null", ".inf"],
+)
+def test_render_config_quotes_what_yaml_12_reads_otherwise(version: str) -> None:
+    """Test a version YAML 1.2 would not read as a string gets quotes.
+
+    The Supervisor reads YAML 1.2, where a short commit SHA like 58899e0 is
+    the number 58899.0, while PyYAML writes it without quotes.
+    """
+    published = render_config("config.yaml", {}, version=version, image=IMAGE)
+
+    assert f"version: '{version}'" in published
+    assert yaml.safe_load(published)["version"] == version
+
+
+@pytest.mark.parametrize("version", ["1.2.3", "v1.2.3", "abcdef1", "0123abc"])
+def test_render_config_leaves_plain_strings(version: str) -> None:
+    """Test a version every YAML parser reads as a string stays as it was."""
+    published = render_config("config.yaml", {}, version=version, image=IMAGE)
+
+    assert f"version: {version}\n" in published
