@@ -11,9 +11,6 @@ FROM ghcr.io/astral-sh/uv:0.12.21@sha256:a7aed3216253ee804de3e2d8afa5073baa1a177
 
 FROM python:3.14-alpine3.23@sha256:e7cff362a12454395f8dc99607c21a602ea880cdce03538877b90c2ba932b16f
 
-# Git clones and pushes the repositories; everything else is Python.
-RUN apk add --no-cache git
-
 ENV \
     UV_COMPILE_BYTECODE=1 \
     UV_NO_CACHE=1 \

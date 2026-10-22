@@ -19,19 +19,23 @@ The apps repository declares its apps in `.apps.yml` (or the older
 
 ## Project layout
 
-| Path                     | Purpose                                                    |
-| ------------------------ | ---------------------------------------------------------- |
-| `src/repositoryupdater/` | The package                                                |
-| `  cli.py`               | Click command and the Git askpass helper                   |
-| `  repository.py`        | The apps repository: app list, README, commits and push    |
-| `  app.py`               | One app: version resolution and the files an update writes |
-| `  github.py`            | PyGithub subclass that can clone with the token            |
-| `  output.py`            | Everything the terminal shows; nothing else prints         |
-| `  exceptions.py`        | The `RepositoryUpdaterError` hierarchy                     |
-| `  const.py`             | Channels and the file names that are looked up             |
-| `tests/`                 | pytest suite with syrupy snapshots                         |
-| `action.yaml`            | The GitHub Action; runs the published image                |
-| `Dockerfile`             | The container image, built from the wheel                  |
+| Path                     | Purpose                                             |
+| ------------------------ | --------------------------------------------------- |
+| `src/repositoryupdater/` | The package                                         |
+| `  cli.py`               | Click command; runs the updater                     |
+| `  updater.py`           | Loads every app and commits the updates             |
+| `  github/`              | Asynchronous client for the GitHub API we use       |
+| `  applist.py`           | The `.apps.yml` model                               |
+| `  versions.py`          | Which version a channel publishes, and how it shows |
+| `  appconfig.py`         | Reading and writing app configuration files         |
+| `  render.py`            | READMEs, changelogs and commit messages             |
+| `  archive.py`           | Reading app files out of a repository tarball       |
+| `  output.py`            | Everything the terminal shows; nothing else prints  |
+| `  exceptions.py`        | The `RepositoryUpdaterError` hierarchy              |
+| `  const.py`             | Channels and the file names that are looked up      |
+| `tests/`                 | pytest suite with syrupy snapshots                  |
+| `action.yaml`            | The GitHub Action; runs the published image         |
+| `Dockerfile`             | The container image, built from the wheel           |
 
 ## Commands
 
@@ -60,7 +64,7 @@ committing it.
   (including the `addons` key), the variables handed to `.README.j2`
   templates, the commit messages, the Action inputs and the `--addon` alias.
   Do not break them without a major release.
-- Coverage is enforced at 85% for now. New code needs tests.
+- Coverage is enforced at 95%. New code needs tests.
 - Every test carries a one-line docstring describing what it verifies.
 - Comments explain the why, not the what. Clarity over cleverness, clear names,
   and blank lines between logical steps.
@@ -82,13 +86,17 @@ See [AI_POLICY.md](AI_POLICY.md) for the contribution policy around AI tooling.
 
 ## Gotchas
 
-- `App` and `Repository` start with their state set to `None` and fill it in
-  `load()`. ty cannot follow that, which is why `unresolved-attribute` is a
-  warning and ty runs with `--exit-zero-on-warning`. Both go away with the
-  planned async rewrite.
-- A version that is valid semver is looked up as a Git tag, with or without a
-  `v` prefix. Anything else is treated as a commit reference. On the edge
-  channel, the version is the short SHA of the newest commit.
+- A published version is looked up as a Git ref: first as is, then with a
+  `v` in front. That covers both tag styles and the short SHA an edge version
+  is. Whether a README shows it with a `v` depends on whether it is the start
+  of its commit SHA, not on what the version looks like.
+- Prereleases are recognized with AwesomeVersion, the way Home Assistant reads
+  versions. Only real version numbers can be one; a SHA never is.
+- The updater never clones. It reads files and tarballs through the API and
+  commits through the Git Data API, one commit per app.
+- `--dry-run` compares what would be committed with what is there, without
+  writing. A forced dry run (`--force --dry-run`) against a real apps
+  repository should show nothing but updates that are actually waiting.
 - prek hands pylint the files one by one, so `ignore = ["tests"]` does not keep
   it out of the tests. Test modules disable `redefined-outer-name` for pytest
   fixtures at the top of the file.
@@ -98,7 +106,8 @@ See [AI_POLICY.md](AI_POLICY.md) for the contribution policy around AI tooling.
 ## Where to read next
 
 - `README.md`: the app list format, channels and the README templates.
-- `tests/test_app.py`: how the latest version is picked on each channel.
+- `tests/test_versions.py`: how the version a channel publishes is picked.
+- `tests/test_updater.py`: whole runs against a GitHub in memory.
 
 [community-apps]: https://github.com/hassio-addons
 [prek]: https://github.com/j178/prek

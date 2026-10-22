@@ -1,10 +1,5 @@
 """Constants used by the Repository Updater program."""
 
-CHANNEL_STABLE = "stable"
-CHANNEL_BETA = "beta"
-CHANNEL_EDGE = "edge"
-CHANNELS = [CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_EDGE]
-
 # App configuration files, in the order they are looked up.
 CONFIG_FILENAMES = ("config.json", "config.yaml", "config.yml")
 
@@ -13,3 +8,17 @@ APP_LIST_FILENAMES = (".apps.yml", ".addons.yml", ".hassio-addons.yml")
 
 # Architectures assumed when an app does not declare its own.
 DEFAULT_ARCHS = ("aarch64", "amd64", "armhf", "armv7", "i386")
+
+# Files copied from an app's own repository into the apps repository; a
+# directory is copied whole.
+STATIC_FILES = (
+    "logo.png",
+    "icon.png",
+    "README.md",
+    "DOCS.md",
+    "apparmor.txt",
+)
+STATIC_DIRECTORIES = ("translations",)
+
+# The template a README is rendered from, in both kinds of repository.
+README_TEMPLATE = ".README.j2"

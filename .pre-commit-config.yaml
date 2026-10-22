@@ -84,7 +84,7 @@ repos:
         name: 🆎 Static type checking using ty
         language: system
         types: [python]
-        entry: uv run --no-sync ty check --exit-zero-on-warning
+        entry: uv run --no-sync ty check
         pass_filenames: false
         require_serial: true
       - id: no-commit-to-branch

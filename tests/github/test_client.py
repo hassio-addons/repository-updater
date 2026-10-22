@@ -256,6 +256,28 @@ async def test_tarball_follows_redirect(
     assert tarball == b"\x1f\x8b tarball"
 
 
+async def test_tree(responses: aioresponses, github: GitHub) -> None:
+    """Test every file in a repository is listed, without the directories."""
+    url = f"{REPOSITORY}/git/trees/master?recursive=1"
+    mock(responses, "GET", url, "git_tree.json")
+
+    paths = await github.tree("hassio-addons/repository-edge", "master")
+
+    assert "ssh/config.yaml" in paths
+    assert "actual-budget/translations/en.yaml" in paths
+    assert "ssh" not in paths
+
+
+async def test_tree_truncated(responses: aioresponses, github: GitHub) -> None:
+    """Test a listing GitHub cut off is refused, not half used."""
+    tree = orjson.loads(fixture_bytes("git_tree.json"))
+    tree["truncated"] = True
+    responses.get(f"{REPOSITORY}/git/trees/master?recursive=1", payload=tree)
+
+    with pytest.raises(GitHubResponseError, match="too many files"):
+        await github.tree("hassio-addons/repository-edge", "master")
+
+
 def mock_commit_files(responses: aioresponses) -> None:
     """Answer every step of a commit through the Git Data API, but the last."""
     mock(responses, "GET", f"{REPOSITORY}/git/ref/heads/master", "git_ref.json")

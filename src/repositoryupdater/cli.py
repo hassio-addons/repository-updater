@@ -6,17 +6,19 @@ Handles CLI for the Repository Updater
 
 from __future__ import annotations
 
-import sys
-from os import environ
-from sys import argv
+import asyncio
+from typing import TYPE_CHECKING
 
 import click
 
 from . import APP_FULL_NAME, APP_VERSION
 from .exceptions import RepositoryUpdaterError
+from .github import GitHub
 from .output import Output
-from .pygithub import GitHub
-from .repository import Repository
+from .updater import Updater
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 # Every option can also come from the environment. The INPUT_* names are what
@@ -56,6 +58,13 @@ from .repository import Repository
     show_envvar=True,
     help="Force an update of the app repository",
 )
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    envvar="INPUT_DRY_RUN",
+    show_envvar=True,
+    help="Show what would be committed, without committing",
+)
 @click.version_option(APP_VERSION, prog_name=APP_FULL_NAME)
 def repository_updater(
     *,
@@ -63,43 +72,29 @@ def repository_updater(
     repository: str,
     app: str | None,
     force: bool,
+    dry_run: bool,
 ) -> None:
     """Home Assistant Community Apps Repository Updater."""
     output = Output()
-    output.title(APP_FULL_NAME)
+    output.title(f"{APP_FULL_NAME} {APP_VERSION}")
+
+    def build(github: GitHub) -> Updater:
+        return Updater(
+            github=github,
+            output=output,
+            repository_name=repository,
+            app_filter=app,
+            force=force,
+            dry_run=dry_run,
+        )
 
     try:
-        github = GitHub(token)
-        output.info(
-            f"Authenticated with GitHub as {output.emphasis(github.get_user().name)}"
-        )
-
-        apps_repository = Repository(
-            github, repository, app, force=force, output=output
-        )
-        try:
-            apps_repository.load()
-            apps_repository.update()
-        finally:
-            apps_repository.cleanup()
+        asyncio.run(_update(token, build))
     except RepositoryUpdaterError as err:
         raise click.ClickException(str(err)) from err
 
 
-def git_askpass() -> None:
-    """
-    Git credentials helper.
-
-    Short & sweet script for use with git clone and fetch credentials.
-    Requires GIT_USERNAME and GIT_PASSWORD environment variables,
-    intended to be called by Git via GIT_ASKPASS.
-    """
-    if argv[1] == "Username for 'https://github.com': ":
-        print(environ["GIT_USERNAME"])  # noqa: T201
-        sys.exit()
-
-    if argv[1] == f"Password for 'https://{environ['GIT_USERNAME']}@github.com': ":
-        print(environ["GIT_PASSWORD"])  # noqa: T201
-        sys.exit()
-
-    sys.exit(1)
+async def _update(token: str, build: Callable[[GitHub], Updater]) -> None:
+    """Run an updater with a GitHub client that is closed afterwards."""
+    async with GitHub(token) as github:
+        await build(github).run()

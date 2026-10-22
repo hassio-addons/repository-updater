@@ -48,6 +48,8 @@ Options:
                                   INPUT_APP, INPUT_ADDON]
   --force                         Force an update of the app repository  [env
                                   var: INPUT_FORCE]
+  --dry-run                       Show what would be committed, without
+                                  committing  [env var: INPUT_DRY_RUN]
   --version                       Show the version and exit.
   --help                          Show this message and exit.
 ```

@@ -59,6 +59,4 @@ jobs:
           push: false
           tags: repository-updater:test
       - name: 🧪 Smoke test image
-        run: |
-          docker run --rm repository-updater:test --version
-          docker run --rm --entrypoint git repository-updater:test --version
+        run: docker run --rm repository-updater:test --version

@@ -71,9 +71,19 @@ class AppReleaseNotFoundError(RepositoryUpdaterError):
         )
 
 
-class AppNotUpdatingError(RepositoryUpdaterError):
-    """Raised when updating an app that was left out of this run."""
+class AppVersionNotFoundError(RepositoryUpdaterError):
+    """Raised when the version an apps repository holds cannot be found."""
 
-    def __init__(self, target: str) -> None:
-        """Initialize with the app that was asked to update."""
-        super().__init__(f'App "{target}" was not marked for updating this run')
+    def __init__(self, repository: str, version: str) -> None:
+        """Initialize with the app repository and the version looked for."""
+        super().__init__(
+            f"App repository {repository} has no tag or commit for version {version}"
+        )
+
+
+class InvalidArchiveError(RepositoryUpdaterError):
+    """Raised when a repository tarball cannot be read."""
+
+    def __init__(self, repository: str) -> None:
+        """Initialize with the repository the tarball came from."""
+        super().__init__(f"The archive of {repository} cannot be read")
