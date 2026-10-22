@@ -53,7 +53,7 @@ runs:
         restore-keys: |
           repository-updater-${{ inputs.repository || github.repository }}-
     - name: 🚀 Run the Repository Updater
-      uses: docker://ghcr.io/hassio-addons/repository-updater:2.0.2
+      uses: docker://ghcr.io/hassio-addons/repository-updater:3.0.0
       env:
         INPUT_TOKEN: ${{ inputs.token }}
         INPUT_REPOSITORY: ${{ inputs.repository }}
