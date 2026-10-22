@@ -20,6 +20,7 @@ from .const import (
 )
 from .exceptions import (
     AppConfigNotFoundError,
+    AppNotFoundError,
     AppReleaseNotFoundError,
     AppsFailedError,
     AppVersionNotFoundError,
@@ -29,6 +30,7 @@ from .exceptions import (
 )
 from .github import (
     GitHubAuthenticationError,
+    GitHubConflictError,
     GitHubNotFoundError,
     GitHubRateLimitError,
 )
@@ -55,8 +57,9 @@ if TYPE_CHECKING:
     from .github import GitHub, Release, Repository, User
     from .output import Output
 
-# Errors that would hit every app the same way; no use carrying on.
-STOP_THE_RUN = (GitHubAuthenticationError, GitHubRateLimitError)
+# Errors that would hit every app the same way, or a branch that moved under
+# this run, whose snapshot is no good anymore; no use carrying on.
+STOP_THE_RUN = (GitHubAuthenticationError, GitHubConflictError, GitHubRateLimitError)
 
 # How many apps load at the same time. Enough to be quick, few enough to
 # stay clear of GitHub's secondary rate limits.
@@ -106,6 +109,10 @@ class App:
     # The blob SHA of the app's configuration in the apps repository.
     config_sha: str | None = None
     from_cache: bool = False
+    # A version the apps repository holds, but its own repository no longer
+    # knows. The app can still get an update; until then, the README cannot
+    # show it.
+    lost_version: str | None = None
 
     @property
     def target(self) -> str:
@@ -135,16 +142,27 @@ class Run:
     repository: Repository
     user: User
     app_list: AppList
-    # Every file in the apps repository, with its blob SHA.
+    # The commit of the apps repository this run works from; it moves along
+    # with every commit the run makes.
+    head: str
+    # Every file in the apps repository at that commit, with its blob SHA.
     blobs: dict[str, str]
     readme_template: bytes | None
     apps: list[App] = field(default_factory=list)
     # Apps that got their update in this run; the README shows those at
     # their new version.
     published: set[str] = field(default_factory=set)
-    # The README shows every app, so it stays as it is when one of them
-    # could not even be read; the next run catches it up.
-    readme: bool = True
+
+    @property
+    def readme(self) -> bool:
+        """Return whether the README can show every app.
+
+        When an app could not be read, the README stays as it is, rather
+        than dropping that app; the next run catches it up.
+        """
+        return all(
+            app.current_known or app.target in self.published for app in self.apps
+        )
 
 
 @dataclass(kw_only=True)
@@ -182,13 +200,17 @@ class Updater:
                 f'Only updating app "{self.output.plain(self.app_filter)}" this run!'
             )
 
+        self._check_filter(app_list)
+
+        head = await self.github.branch_head(
+            repository.full_name, repository.default_branch
+        )
         run = Run(
             repository=repository,
             user=user,
             app_list=app_list,
-            blobs=await self.github.tree(
-                repository.full_name, repository.default_branch
-            ),
+            head=head,
+            blobs=await self.github.tree(repository.full_name, head),
             readme_template=await self.github.file(
                 repository.full_name, README_TEMPLATE
             ),
@@ -197,7 +219,6 @@ class Updater:
         run.apps = await self._load_apps(run, cached)
         self._report(run.apps, app_list.channel)
 
-        run.readme = all(app.current_known for app in run.apps)
         if not run.readme:
             self.output.warning(
                 "The README of the apps repository stays as it is this run: "
@@ -244,6 +265,7 @@ class Updater:
             # remembers it with the configuration just written.
             config = files[f"{app.target}/{latest.config_filename}"]
             app.current = latest
+            app.current_known = True
             app.config_sha = git_blob_sha(config) if config is not None else None
 
     def _save_cache(self, apps: list[App]) -> None:
@@ -281,6 +303,13 @@ class Updater:
         for app in failed:
             self.output.error(f"App {app.target}: {app.error}")
         raise AppsFailedError([app.target for app in failed])
+
+    def _check_filter(self, app_list: AppList) -> None:
+        """Refuse an app to update that the app list does not have."""
+        if self.app_filter and not any(
+            self._is_selected(entry) for entry in app_list.apps
+        ):
+            raise AppNotFoundError(self.app_filter)
 
     async def _app_list(self, repository: Repository) -> AppList:
         """Fetch and parse the app list the apps repository declares."""
@@ -413,11 +442,17 @@ class Updater:
         if "version" not in config:
             raise InvalidAppConfigError(location, 'it is missing "version"')
 
+        version = str(config["version"])
+        try:
+            found = await self._find_version(app.entry.repository, version)
+        except AppVersionNotFoundError:
+            app.lost_version = version
+            app.current_known = False
+            return
+
         app.config_sha = blobs[path]
         app.current = AppState(
-            version=await self._find_version(
-                app.entry.repository, str(config["version"])
-            ),
+            version=found,
             details=AppDetails.from_config(location, config),
             config_filename=filename,
             repository=repository,
@@ -503,7 +538,12 @@ class Updater:
                     f"Source: {self.output.plain(app.repository.html_url)}"
                 )
 
-            if app.current is None:
+            if app.lost_version is not None:
+                current = (
+                    f"{self.output.highlight(app.lost_version)} "
+                    f"{self.output.emphasis('(not found in its repository)')}"
+                )
+            elif app.current is None:
                 current = self.output.emphasis("Not available")
             else:
                 version = app.current.version
@@ -564,9 +604,12 @@ class Updater:
                 if state is not None
             ],
         )
-        return {
-            "README.md": render_template(run.readme_template.decode(), data).encode()
-        }
+        readme = render_template(
+            run.readme_template,
+            data,
+            location=f"{run.repository.full_name}/{README_TEMPLATE}",
+        )
+        return {"README.md": readme.encode()}
 
     async def _app_files(self, app: App, latest: LatestState, run: Run) -> Files:
         """Return every file an update of an app writes, or deletes."""
@@ -617,8 +660,9 @@ class Updater:
         # A README template beats a README.md copied from the source.
         if README_TEMPLATE in source:
             files[f"{app.target}/README.md"] = render_template(
-                source[README_TEMPLATE].decode(),
+                source[README_TEMPLATE],
                 self._template_data(app, latest, run.app_list.channel),
+                location=f"{app.entry.repository}/{app.entry.app_target}/{README_TEMPLATE}",
             ).encode()
 
         changelog = await self._changelog(app, latest, run.app_list.changelog)
@@ -679,10 +723,12 @@ class Updater:
             message=message,
             files=files,
             author=run.user,
+            expected_head=run.head,
         )
         if commit is None:
             self.output.skipped("Skipped, no changes.")
         else:
+            run.head = commit.sha
             self.output.done(f"Done: {commit.sha[:7]}")
         return True
 

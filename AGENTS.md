@@ -101,7 +101,14 @@ See [AI_POLICY.md](AI_POLICY.md) for the contribution policy around AI tooling.
   app skips loading the rest. An entry only counts when the blob SHA of the
   app's configuration still matches the tree of the apps repository; after a
   commit the updater works out the new SHA itself. A broken cache only makes a
-  run slower, never wrong. Bump `CACHE_VERSION` when what it holds changes.
+  run slower. It does keep an app's repository URL and commit until that
+  configuration changes. Bump `CACHE_VERSION` when what it holds changes.
+- A run works from the head of the branch it read at the start, and every
+  commit only goes on top of that head (moving along with its own commits).
+  When the branch moved under it, the run stops: what it would commit was
+  worked out from the old state and could undo the other change.
+- README templates come from app repositories, so they render in a Jinja
+  sandbox and never see the process, its environment or the token.
 - `--dry-run` compares what would be committed with what is there, without
   writing. A forced dry run (`--force --dry-run`) against a real apps
   repository should show nothing but updates that are actually waiting.

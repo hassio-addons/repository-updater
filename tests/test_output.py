@@ -91,3 +91,15 @@ def test_error_closes_an_open_step(monkeypatch: pytest.MonkeyPatch) -> None:
     assert (
         buffer.getvalue() == "Downloading app source...Failed!\nError: Archive gone\n"
     )
+
+
+def test_outside_values_never_break_the_line(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test a newline in a value cannot start a workflow command of its own."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    buffer = io.StringIO()
+    output = Output(Console(file=buffer, no_color=True, width=200))
+
+    output.step(f"Committing {output.plain('Example\n::add-mask::secret')}")
+    output.done()
+
+    assert buffer.getvalue() == "Committing Example ::add-mask::secret...Done\n"

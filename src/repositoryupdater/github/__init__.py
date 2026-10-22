@@ -3,6 +3,7 @@
 from .client import GitHub
 from .exceptions import (
     GitHubAuthenticationError,
+    GitHubConflictError,
     GitHubConnectionError,
     GitHubError,
     GitHubNotFoundError,
@@ -15,6 +16,7 @@ __all__ = [
     "Commit",
     "GitHub",
     "GitHubAuthenticationError",
+    "GitHubConflictError",
     "GitHubConnectionError",
     "GitHubError",
     "GitHubNotFoundError",

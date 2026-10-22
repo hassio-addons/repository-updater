@@ -99,8 +99,11 @@ option on the command line always beats the environment. `--addon` and the
 A run for a single app still needs every other app, to render the README of
 the apps repository. The Repository Updater remembers what the apps repository
 holds of each app in a cache, so the next run only loads what changed. Every
-cached app is checked against the apps repository first: an app that changed
-since, even by hand, simply gets loaded again. The cache lives in
+cached app is checked against the apps repository first: an app whose
+configuration changed since, even by hand, simply gets loaded again. The
+cache does keep an app's repository URL and the commit behind its version
+until that configuration changes; after renaming an app repository or moving
+a release tag, run once with `--no-cache`. The cache lives in
 `~/.cache/repository-updater` (or `$XDG_CACHE_HOME`); `--cache-dir` puts it
 elsewhere and `--no-cache` runs without it.
 
@@ -148,6 +151,11 @@ jobs:
   whatever:
     name: Running updater for ${{ github.event.client_payload.app }}
     runs-on: ubuntu-latest
+    # One run at a time: a run that finds the apps repository changed under
+    # it stops instead of committing, so queue them up.
+    concurrency:
+      group: repository-updater
+      cancel-in-progress: false
     steps:
       - name: 🚀 Run Repository Updater
         uses: hassio-addons/repository-updater@v3.0.0
@@ -314,7 +322,7 @@ list contains the following variables:
 - **version**: The version of the app, like `v1.2.3` for a release, or the
   short SHA of a commit on edge
 - **commit**: Full SHA of the commit bound to the current version
-- **date**: Date and time of the release, or of the commit on edge
+- **date**: Date and time of the commit of the version
 
 ## Examples
 

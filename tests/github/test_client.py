@@ -17,6 +17,7 @@ from repositoryupdater import APP_VERSION
 from repositoryupdater.github import (
     GitHub,
     GitHubAuthenticationError,
+    GitHubConflictError,
     GitHubConnectionError,
     GitHubNotFoundError,
     GitHubRateLimitError,
@@ -529,3 +530,50 @@ async def test_given_session_stays_open(responses: aioresponses) -> None:
             await github.user()
 
         assert not session.closed
+
+
+async def test_branch_head(responses: aioresponses, github: GitHub) -> None:
+    """Test the commit a branch points at is read."""
+    mock(responses, "GET", f"{REPOSITORY}/git/ref/heads/master", "git_ref.json")
+
+    assert await github.branch_head("hassio-addons/repository-edge", "master") == (
+        HEAD_SHA
+    )
+
+
+async def test_commit_files_branch_moved_before(
+    responses: aioresponses, github: GitHub
+) -> None:
+    """Test files meant for an older state of the branch are not committed."""
+    mock(responses, "GET", f"{REPOSITORY}/git/ref/heads/master", "git_ref.json")
+
+    with pytest.raises(GitHubConflictError, match="moved to 6f30d62"):
+        await github.commit_files(
+            "hassio-addons/repository-edge",
+            branch="master",
+            message="m",
+            files={"README.md": b"new"},
+            author=author(),
+            expected_head="0" * 40,
+        )
+
+    assert ("POST", URL(f"{REPOSITORY}/git/blobs")) not in responses.requests
+
+
+async def test_commit_files_failed_upload(
+    responses: aioresponses, github: GitHub
+) -> None:
+    """Test a failed upload raises its own error, not a group of them."""
+    mock(responses, "GET", f"{REPOSITORY}/git/ref/heads/master", "git_ref.json")
+    mock(responses, "GET", f"{REPOSITORY}/git/commits/{HEAD_SHA}", "git_commit.json")
+    responses.post(f"{REPOSITORY}/git/blobs", status=502, body=b"Bad gateway")
+
+    with pytest.raises(GitHubResponseError, match="Bad gateway"):
+        await github.commit_files(
+            "hassio-addons/repository-edge",
+            branch="master",
+            message="m",
+            files={"README.md": b"new"},
+            author=author(),
+            expected_head=HEAD_SHA,
+        )

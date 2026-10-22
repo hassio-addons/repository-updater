@@ -98,3 +98,19 @@ class AppsFailedError(RepositoryUpdaterError):
         noun = "app" if len(self.targets) == 1 else "apps"
         names = ", ".join(self.targets)
         super().__init__(f"{len(self.targets)} {noun} could not be updated: {names}")
+
+
+class InvalidTemplateError(RepositoryUpdaterError):
+    """Raised when a README template cannot be rendered."""
+
+    def __init__(self, location: str, problem: str) -> None:
+        """Initialize with the template and what is wrong with it."""
+        super().__init__(f"README template {location} cannot be rendered: {problem}")
+
+
+class AppNotFoundError(RepositoryUpdaterError):
+    """Raised when the app asked for is not in the app list."""
+
+    def __init__(self, app: str) -> None:
+        """Initialize with the app that was asked for."""
+        super().__init__(f'App "{app}" is not in the app list of the apps repository')

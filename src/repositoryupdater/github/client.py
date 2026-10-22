@@ -17,7 +17,9 @@ from repositoryupdater import APP_VERSION
 
 from .exceptions import (
     GitHubAuthenticationError,
+    GitHubConflictError,
     GitHubConnectionError,
+    GitHubError,
     GitHubNotFoundError,
     GitHubRateLimitError,
     GitHubResponseError,
@@ -35,6 +37,10 @@ MEDIA_TYPE_RAW = "application/vnd.github.raw+json"
 
 # A tarball of a whole app repository takes longer than an API call.
 DOWNLOAD_TIMEOUT_FACTOR = 6
+
+# How many files upload at the same time when committing; enough to be
+# quick, few enough to stay clear of GitHub's secondary rate limits.
+PARALLEL_UPLOADS = 8
 
 
 @dataclass
@@ -202,6 +208,13 @@ class GitHub:
             if entry["type"] == "blob"
         }
 
+    async def branch_head(self, repository: str, branch: str) -> str:
+        """Return the SHA of the commit a branch points at."""
+        head = await self._request_json(
+            _repo_url(repository, "git", "ref", "heads", branch)
+        )
+        return head["object"]["sha"]
+
     async def tarball(self, repository: str, ref: str) -> bytes:
         """Return a gzipped tarball of a repository at a ref."""
         _, body = await self._request(
@@ -209,7 +222,9 @@ class GitHub:
         )
         return body
 
-    async def commit_files(
+    # Every argument after repository is keyword-only; there is no mixing up.
+    # pylint: disable-next=too-many-arguments
+    async def commit_files(  # noqa: PLR0913
         self,
         repository: str,
         *,
@@ -217,6 +232,7 @@ class GitHub:
         message: str,
         files: Mapping[str, bytes | None],
         author: User,
+        expected_head: str | None = None,
     ) -> Commit | None:
         """Commit changed files on top of a branch, without a clone.
 
@@ -224,28 +240,28 @@ class GitHub:
         file is written as a regular, non-executable file. Returns None when
         the files are already exactly like this, so nothing was committed.
 
-        The branch only moves forward: when someone else moved it in the
-        meantime, GitHub refuses the update instead of losing their work.
+        The files are meant for the branch as it was at expected_head. When
+        the branch moved since, they could undo what moved it, so nothing
+        gets committed. The branch also only ever moves forward: when it
+        moves while committing, GitHub refuses the update instead.
         """
         if not files:
             return None
 
-        head = await self._request_json(
-            _repo_url(repository, "git", "ref", "heads", branch)
-        )
-        head_sha = head["object"]["sha"]
+        head_sha = await self.branch_head(repository, branch)
+        if expected_head is not None and head_sha != expected_head:
+            msg = (
+                f"{repository} moved to {head_sha[:7]} while this run worked "
+                f"from {expected_head[:7]}; run again"
+            )
+            raise GitHubConflictError(msg, status=HTTPStatus.CONFLICT)
+
         head_commit = await self._request_json(
             _repo_url(repository, "git", "commits", head_sha)
         )
         base_tree = head_commit["tree"]["sha"]
 
-        async with asyncio.TaskGroup() as group:
-            blobs = {
-                path: group.create_task(self._create_blob(repository, content))
-                for path, content in files.items()
-                if content is not None
-            }
-
+        blobs = await self._upload_blobs(repository, files)
         tree = await self._request_json(
             _repo_url(repository, "git", "trees"),
             "POST",
@@ -256,7 +272,7 @@ class GitHub:
                         "path": path,
                         "mode": "100644",
                         "type": "blob",
-                        "sha": blobs[path].result() if path in blobs else None,
+                        "sha": blobs.get(path),
                     }
                     for path in sorted(files)
                 ],
@@ -281,6 +297,29 @@ class GitHub:
             json={"sha": commit["sha"], "force": False},
         )
         return Commit.from_dict(commit)
+
+    async def _upload_blobs(
+        self, repository: str, files: Mapping[str, bytes | None]
+    ) -> dict[str, str]:
+        """Store the contents of files, a handful at a time; return their SHAs."""
+        limit = asyncio.Semaphore(PARALLEL_UPLOADS)
+
+        async def upload(content: bytes) -> str:
+            async with limit:
+                return await self._create_blob(repository, content)
+
+        try:
+            async with asyncio.TaskGroup() as group:
+                tasks = {
+                    path: group.create_task(upload(content))
+                    for path, content in files.items()
+                    if content is not None
+                }
+        except* GitHubError as errors:
+            # One failed upload is enough to say why; the rest got cancelled.
+            raise errors.exceptions[0] from None
+
+        return {path: task.result() for path, task in tasks.items()}
 
     async def _create_blob(self, repository: str, content: bytes) -> str:
         """Store file contents in a repository and return their SHA."""

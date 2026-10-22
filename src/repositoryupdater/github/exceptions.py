@@ -42,3 +42,7 @@ class GitHubRateLimitError(GitHubResponseError):
         """Initialize with the moment the rate limit resets."""
         super().__init__(f"{message} (resets at {reset:%H:%M:%S} UTC)", status=status)
         self.reset = reset
+
+
+class GitHubConflictError(GitHubResponseError):
+    """The branch moved away from where this run expected it to be."""
