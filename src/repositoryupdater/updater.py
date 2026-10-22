@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from .appconfig import AppDetails, parse_config, render_config
-from .applist import AppEntry, AppList, Channel, parse_app_list
+from .applist import AppEntry, AppList, ChangelogMode, Channel, parse_app_list
 from .archive import app_files
 from .const import (
     APP_LIST_FILENAMES,
@@ -29,6 +29,7 @@ from .render import (
     README_COMMIT_MESSAGE,
     app_template_data,
     commit_message,
+    prepend_changelog,
     render_changelog,
     render_template,
     repository_template_data,
@@ -157,7 +158,7 @@ class Updater:
                 continue
 
             self.output.section(f"Updating app {self.output.plain(app.target)}")
-            files = await self._app_files(app, app.latest, app_list.channel, paths)
+            files = await self._app_files(app, app.latest, app_list, paths)
 
             published.add(app.target)
             files |= self._readme(
@@ -384,7 +385,7 @@ class Updater:
         return {"README.md": render_template(template.decode(), data).encode()}
 
     async def _app_files(
-        self, app: App, latest: LatestState, channel: Channel, paths: set[str]
+        self, app: App, latest: LatestState, app_list: AppList, paths: set[str]
     ) -> Files:
         """Return every file an update of an app writes, or deletes."""
         filename = latest.config_filename
@@ -434,17 +435,35 @@ class Updater:
         if README_TEMPLATE in source:
             files[f"{app.target}/README.md"] = render_template(
                 source[README_TEMPLATE].decode(),
-                self._template_data(app, latest, channel),
+                self._template_data(app, latest, app_list.channel),
             ).encode()
 
-        changelog = await self._changelog(app, latest)
+        changelog = await self._changelog(app, latest, app_list.changelog)
         files[f"{app.target}/CHANGELOG.md"] = changelog.encode()
         return files
 
-    async def _changelog(self, app: App, latest: LatestState) -> str:
+    async def _changelog(
+        self, app: App, latest: LatestState, mode: ChangelogMode
+    ) -> str:
         """Return the changelog of the version of an app being published."""
         version = latest.version
-        if version.is_release or latest.release is None:
+        if version.is_release:
+            notes = render_changelog(version)
+            if mode is ChangelogMode.REPLACE:
+                return notes
+
+            existing = await self.github.file(
+                self.repository_name, f"{app.target}/CHANGELOG.md"
+            )
+            return prepend_changelog(
+                existing.decode() if existing else "",
+                notes,
+                version=version.version,
+                previous_version=app.current.version.version if app.current else None,
+            )
+
+        # Edge publishes commits; their changelog always replaces the file.
+        if latest.release is None:
             return render_changelog(version)
 
         commits = await self.github.compare(

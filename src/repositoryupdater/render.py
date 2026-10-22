@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Any
 
 import emoji
@@ -16,6 +17,10 @@ if TYPE_CHECKING:
     from .versions import AppVersion
 
 README_COMMIT_MESSAGE = ":books: Updated README"
+
+# The heading of a version section in a changelog, like "## 1.2.0" or
+# "## v1.2.0 (2025-09-01)", but not a numbered heading like "## 2. Notes".
+VERSION_HEADING = re.compile(r"^## v?\d+\.\d+", re.MULTILINE)
 
 
 def render_template(template: str, data: Mapping[str, Any]) -> str:
@@ -104,6 +109,38 @@ def render_changelog(
         changelog = f"- {version.commit.message}\n"
 
     return emoji.emojize(changelog, language="alias")
+
+
+def prepend_changelog(
+    existing: str, notes: str, *, version: str, previous_version: str | None
+) -> str:
+    """Return a changelog with the notes of a release on top.
+
+    The notes go under a "## <version>" heading above the newest version,
+    below any title or introduction. A rerun or a forced update replaces the
+    section of its own version. A changelog written in replace mode holds
+    the notes of one release without a heading; those get filed under the
+    version they belong to. Home Assistant uses these headings to show what
+    changed between the installed and the new version.
+    """
+    newest = VERSION_HEADING.search(existing)
+    if newest:
+        intro, older = existing[: newest.start()], existing[newest.start() :]
+    else:
+        intro, older = "", existing
+        if older.startswith("# "):
+            intro, _, older = older.partition("\n")
+            intro += "\n\n"
+
+        if older.strip() and previous_version:
+            older = f"## {previous_version}\n\n{older.strip()}\n"
+
+    heading = f"## {version}"
+    if older.startswith(f"{heading}\n"):
+        next_heading = VERSION_HEADING.search(older, len(heading))
+        older = older[next_heading.start() :] if next_heading else ""
+
+    return f"{intro}{heading}\n\n{notes.strip()}\n\n{older}".rstrip() + "\n"
 
 
 def commit_message(name: str, version: AppVersion, *, forced: bool) -> str:
