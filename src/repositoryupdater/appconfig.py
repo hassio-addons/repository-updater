@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import yaml
+from mashumaro.mixins.orjson import DataClassORJSONMixin
 
 from .const import DEFAULT_ARCHS
 from .exceptions import InvalidAppConfigError
@@ -16,7 +17,7 @@ REQUIRED_KEYS = ("name", "slug", "description")
 
 
 @dataclass(frozen=True, kw_only=True)
-class AppDetails:
+class AppDetails(DataClassORJSONMixin):
     """What the READMEs show about an app, from its configuration."""
 
     name: str

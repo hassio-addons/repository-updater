@@ -65,8 +65,12 @@ class Commit(DataClassORJSONMixin):
         """Flatten the two shapes GitHub uses for a commit.
 
         The REST API nests the Git commit under "commit"; the Git Data API
-        returns the Git commit itself.
+        returns the Git commit itself. A commit this model wrote itself, like
+        in the cache, is flat already.
         """
+        if "date" in d:
+            return d
+
         git_commit = d.get("commit", d)
         return {
             "sha": d["sha"],

@@ -5,7 +5,9 @@
 from __future__ import annotations
 
 import io
+import json
 import tarfile
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
@@ -14,6 +16,7 @@ import pytest
 import yaml
 from rich.console import Console
 
+from repositoryupdater.cache import git_blob_sha, read_cache
 from repositoryupdater.exceptions import (
     AppsFailedError,
     RepositoryAppListNotFoundError,
@@ -32,6 +35,7 @@ from repositoryupdater.updater import Updater
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from pathlib import Path
 
 DATE = datetime(2025, 9, 1, 10, tzinfo=UTC)
 
@@ -131,6 +135,8 @@ class FakeGitHub(GitHub):
         super().__init__("token")
         self.repositories = {repository.name: repository for repository in repositories}
         self.commits: list[Committed] = []
+        # Which repositories got looked up, and how often.
+        self.lookups: Counter[str] = Counter()
 
     def _get(self, name: str) -> FakeRepository:
         if name not in self.repositories:
@@ -144,6 +150,7 @@ class FakeGitHub(GitHub):
 
     async def repository(self, repository: str) -> Repository:
         """Return a repository."""
+        self.lookups[repository] += 1
         return self._get(repository).info
 
     async def file(
@@ -176,11 +183,11 @@ class FakeGitHub(GitHub):
         """Return the commits between two refs."""
         return self._get(repository).compares[(base, head)]
 
-    async def tree(self, repository: str, ref: str) -> list[str]:
-        """Return every file on the branch."""
+    async def tree(self, repository: str, ref: str) -> dict[str, str]:
+        """Return every file on the branch, with its blob SHA."""
         fake = self._get(repository)
         assert ref == fake.branch
-        return sorted(fake.files)
+        return {path: git_blob_sha(content) for path, content in fake.files.items()}
 
     async def tarball(self, repository: str, ref: str) -> bytes:
         """Return the files at a commit, packed the way GitHub does."""
@@ -267,6 +274,12 @@ def apps_repository() -> FakeRepository:
     )
 
 
+async def run_output(updater: Updater) -> str:
+    """Run, and return what the run printed."""
+    await updater.run()
+    return updater.output.console.export_text()
+
+
 async def failing_run(updater: Updater) -> str:
     """Run until it fails, and return what the run printed about the failure."""
     with pytest.raises(AppsFailedError) as exception_info:
@@ -288,6 +301,7 @@ def updater(
     app_filter: str | None = None,
     force: bool = False,
     dry_run: bool = False,
+    cache_path: Path | None = None,
 ) -> Updater:
     """Return an updater for the apps repository."""
     return Updater(
@@ -297,6 +311,7 @@ def updater(
         app_filter=app_filter,
         force=force,
         dry_run=dry_run,
+        cache_path=cache_path,
     )
 
 
@@ -769,3 +784,162 @@ async def test_rejected_token_stops_the_run(
         await updater(github).run()
 
     assert not github.commits
+
+
+async def test_cache_skips_loading_again(
+    apps_repository: FakeRepository,
+    app_repository: FakeRepository,
+    tmp_path: Path,
+) -> None:
+    """Test a second run takes the current state of every app from the cache."""
+    cache = tmp_path / "cache.json"
+    app_repository.releases = [release("v1.0.0")]
+    await updater(FakeGitHub(apps_repository, app_repository), cache_path=cache).run()
+
+    github = FakeGitHub(apps_repository, app_repository)
+    output = await run_output(updater(github, cache_path=cache))
+
+    assert "1 of them from the cache" in output
+    # Only the app being updated is looked up; its current state is not.
+    assert github.lookups[APP_REPOSITORY] == 0
+    assert not github.commits
+
+
+async def test_cache_remembers_what_got_published(
+    apps_repository: FakeRepository,
+    app_repository: FakeRepository,
+    tmp_path: Path,
+) -> None:
+    """Test the cache holds a published version, with the config just written."""
+    cache = tmp_path / "cache.json"
+
+    await updater(FakeGitHub(apps_repository, app_repository), cache_path=cache).run()
+
+    cached = read_cache(cache)["example"]
+    assert cached.version == "1.1.0"
+    assert cached.config_sha == git_blob_sha(
+        apps_repository.files["example/config.yaml"]
+    )
+
+
+async def test_cache_after_dry_run(
+    apps_repository: FakeRepository,
+    app_repository: FakeRepository,
+    tmp_path: Path,
+) -> None:
+    """Test a dry run remembers what the apps repository has, not what it would."""
+    cache = tmp_path / "cache.json"
+
+    await updater(
+        FakeGitHub(apps_repository, app_repository), dry_run=True, cache_path=cache
+    ).run()
+
+    assert read_cache(cache)["example"].version == "1.0.0"
+
+
+@pytest.mark.parametrize(
+    "change",
+    ["config edited by hand", "app moved repository", "config changed format"],
+)
+async def test_cache_invalidated(
+    apps_repository: FakeRepository,
+    app_repository: FakeRepository,
+    tmp_path: Path,
+    change: str,
+) -> None:
+    """Test a cached app that no longer matches the apps repository gets loaded."""
+    cache = tmp_path / "cache.json"
+    app_repository.releases = [release("v1.0.0")]
+    await updater(FakeGitHub(apps_repository, app_repository), cache_path=cache).run()
+
+    if change == "config edited by hand":
+        apps_repository.files["example/config.yaml"] += b"# A comment\n"
+    elif change == "app moved repository":
+        apps_repository.files[".apps.yml"] = APP_LIST.replace(
+            b"hassio-addons/app-example", b"hassio-addons/app-moved"
+        )
+        app_repository.name = "hassio-addons/app-moved"
+    else:
+        config = apps_repository.files.pop("example/config.yaml")
+        apps_repository.files["example/config.json"] = json.dumps(
+            yaml.safe_load(config)
+        ).encode()
+    github = FakeGitHub(apps_repository, app_repository)
+
+    output = await run_output(updater(github, cache_path=cache))
+
+    assert "from the cache" not in output
+    assert github.lookups[app_repository.name] == 1
+
+
+async def test_unusable_cache_is_ignored(
+    apps_repository: FakeRepository,
+    app_repository: FakeRepository,
+    tmp_path: Path,
+) -> None:
+    """Test a cache that cannot be read only means loading everything."""
+    cache = tmp_path / "cache.json"
+    cache.write_text("not a cache")
+    github = FakeGitHub(apps_repository, app_repository)
+
+    await updater(github, cache_path=cache).run()
+
+    assert only_commit(github).message == ":tada: Release of app Example 1.1.0"
+    assert read_cache(cache)["example"].version == "1.1.0"
+
+
+async def test_unwritable_cache_only_warns(
+    apps_repository: FakeRepository,
+    app_repository: FakeRepository,
+    tmp_path: Path,
+) -> None:
+    """Test a cache that cannot be written does not fail the run."""
+    blocker = tmp_path / "file"
+    blocker.write_text("in the way")
+    github = FakeGitHub(apps_repository, app_repository)
+
+    output = await run_output(updater(github, cache_path=blocker / "cache.json"))
+
+    assert only_commit(github).message == ":tada: Release of app Example 1.1.0"
+    assert "Could not write the cache" in output
+
+
+async def test_failed_app_stays_out_of_the_cache(
+    apps_repository: FakeRepository,
+    app_repository: FakeRepository,
+    tmp_path: Path,
+) -> None:
+    """Test an app that could not be read leaves no entry behind."""
+    cache = tmp_path / "cache.json"
+    apps_repository.files["example/config.yaml"] = app_config("0.0.1")
+
+    await failing_run(
+        updater(FakeGitHub(apps_repository, app_repository), cache_path=cache)
+    )
+
+    assert read_cache(cache) == {}
+
+
+class VanishingConfig(FakeGitHub):
+    """A GitHub where the example config disappears right after the listing."""
+
+    async def file(
+        self, repository: str, path: str, *, ref: str | None = None
+    ) -> bytes | None:
+        """Lose the config of the example app in the apps repository."""
+        if repository == APPS_REPOSITORY and path == "example/config.yaml":
+            return None
+        return await super().file(repository, path, ref=ref)
+
+
+async def test_config_gone_since_the_listing(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test a config that vanished midway counts as unreadable, not as absent."""
+    before = apps_repository.files["README.md"]
+    github = VanishingConfig(apps_repository, app_repository)
+
+    output = await failing_run(updater(github))
+
+    assert apps_repository.files["README.md"] == before
+    assert "Could not find an app configuration file" in output
