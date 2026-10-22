@@ -21,6 +21,7 @@ jobs:
   update_release_draft:
     name: ✏️ Draft release
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write # Update the release draft
       pull-requests: read # Read the labels of the merged pull requests

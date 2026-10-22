@@ -1,0 +1,32 @@
+---
+name: PR Labels
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    types:
+      - opened
+      - labeled
+      - unlabeled
+      - synchronize
+
+# Cancel superseded runs for the same pull request to save CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The action reads the labels from the event payload, so it needs no token.
+permissions: {}
+
+jobs:
+  pr_labels:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 🏷 Verify PR has a valid label
+        uses: ludeeus/action-require-labels@be19cd7f04c6fad46a85336f9e9cebdf961807bb # 2.0.0
+        with:
+          labels: >-
+            breaking-change, bugfix, documentation, enhancement,
+            refactor, performance, new-feature, maintenance, ci, dependencies

@@ -1,7 +1,7 @@
-# AI Policy
+# Repository Updater AI Policy
 
 We support using AI (such as LLMs) as tools when contributing to the
-repository updater. However, you are responsible for any contributions you
+Repository Updater. However, you are responsible for any contributions you
 submit, and we are responsible for any contributions we merge and release. We
 hold a high bar for all contributions to this project.
 

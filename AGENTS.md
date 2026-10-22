@@ -10,7 +10,7 @@ The repository updater keeps a Home Assistant apps repository in sync with the
 Git repositories of the apps it lists. For every app it finds the latest
 version the repository's channel may publish (stable, beta or edge), copies
 the app's configuration, static files and changelog into the apps repository,
-re-renders the READMEs from their templates, commits and pushes. It powers the
+re-renders the READMEs from their templates, and commits. It powers the
 [Home Assistant Community Apps][community-apps] project, and runs as a CLI, a
 container image and a GitHub Action.
 
@@ -33,7 +33,7 @@ The apps repository declares its apps in `.apps.yml` (or the older
 | `  cache.py`             | What a run remembers of an apps repository             |
 | `  output.py`            | Everything the terminal shows; nothing else prints     |
 | `  exceptions.py`        | The `RepositoryUpdaterError` hierarchy                 |
-| `  const.py`             | Channels and the file names that are looked up         |
+| `  const.py`             | File names, default architectures and static files     |
 | `tests/`                 | pytest suite with syrupy snapshots                     |
 | `action.yaml`            | The GitHub Action; runs the published image            |
 | `Dockerfile`             | The container image, built from the wheel              |
