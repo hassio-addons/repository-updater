@@ -35,6 +35,7 @@ class Output:
         # lines are not wrapped, so a log keeps one line per message.
         self.console = console or Console(emoji=False, highlight=False, soft_wrap=True)
         self._group_open = False
+        self._step_open = False
 
     @property
     def github_actions(self) -> bool:
@@ -84,17 +85,21 @@ class Output:
     def step(self, message: str) -> None:
         """Announce work about to start, leaving the line open for a result."""
         self.console.print(f"{message}...", end="")
+        self._step_open = True
 
     def done(self, message: str = "Done") -> None:
         """Close an open step that succeeded."""
+        self._step_open = False
         self.console.print(f"[green]{message}[/]")
 
     def skipped(self, message: str = "Skipping") -> None:
         """Close an open step that had nothing to do."""
+        self._step_open = False
         self.console.print(f"[blue]{message}[/]")
 
     def failed(self, message: str = "Failed!") -> None:
         """Close an open step that could not finish."""
+        self._step_open = False
         self.console.print(f"[red]{message}[/]")
 
     def warning(self, message: str) -> None:
@@ -106,7 +111,9 @@ class Output:
         self.console.print(f"[green]{message}[/]")
 
     def error(self, message: str) -> None:
-        """Report what stopped the run."""
+        """Report what went wrong, closing a step it interrupted."""
+        if self._step_open:
+            self.failed()
         self.end_section()
         if self.github_actions:
             self._workflow_command("error", message)

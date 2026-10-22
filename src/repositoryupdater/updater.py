@@ -19,12 +19,17 @@ from .const import (
 from .exceptions import (
     AppConfigNotFoundError,
     AppReleaseNotFoundError,
+    AppsFailedError,
     AppVersionNotFoundError,
     InvalidAppConfigError,
     RepositoryAppListNotFoundError,
     RepositoryUpdaterError,
 )
-from .github import GitHubNotFoundError
+from .github import (
+    GitHubAuthenticationError,
+    GitHubNotFoundError,
+    GitHubRateLimitError,
+)
 from .render import (
     README_COMMIT_MESSAGE,
     app_template_data,
@@ -48,6 +53,9 @@ if TYPE_CHECKING:
     from .github import GitHub, Release, Repository, User
     from .output import Output
 
+# Errors that would hit every app the same way; no use carrying on.
+STOP_THE_RUN = (GitHubAuthenticationError, GitHubRateLimitError)
+
 # How many apps load at the same time. Enough to be quick, few enough to
 # stay clear of GitHub's secondary rate limits.
 PARALLEL_LOADS = 8
@@ -63,6 +71,8 @@ class AppState:
     details: AppDetails
     # The configuration file it came from, like config.yaml.
     config_filename: str
+    # The app's own repository, which the READMEs link to.
+    repository: Repository
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -80,12 +90,17 @@ class App:
     """One app from the list: what the apps repository has, and what is out."""
 
     entry: AppEntry
-    repository: Repository
     updating: bool
+    # The app's own repository; None when even that could not be found.
+    repository: Repository | None = None
     # None if the apps repository never held this app.
     current: AppState | None = None
     # Only looked up for apps in this run.
     latest: LatestState | None = None
+    # What went wrong with this app, if anything. When it went wrong before
+    # its current state was known, the README cannot show it this run.
+    error: RepositoryUpdaterError | None = None
+    current_known: bool = True
 
     @property
     def target(self) -> str:
@@ -96,6 +111,16 @@ class App:
         """Return whether the apps repository is behind on this app."""
         current = self.current.version if self.current else None
         return needs_update(current, latest.version, force=force)
+
+    def update_to(self, *, force: bool) -> LatestState | None:
+        """Return the version to update this app to, if it gets an update."""
+        if self.error is not None or self.latest is None:
+            return None
+
+        if not self.needs_update(self.latest, force=force):
+            return None
+
+        return self.latest
 
 
 @dataclass(kw_only=True)
@@ -139,36 +164,67 @@ class Updater:
         )
         readme_template = await self.github.file(repository.full_name, README_TEMPLATE)
 
+        # The README shows every app, so it stays as it is when one of them
+        # could not even be read; the next run catches it up.
+        readme = all(app.current_known for app in apps)
+        if not readme:
+            self.output.warning(
+                "The README of the apps repository stays as it is this run: "
+                "not every app could be read."
+            )
+
         # Apps that got their update in this run; the README shows those at
         # their new version.
         published: set[str] = set()
 
-        self.output.divider()
-        await self._commit(
-            repository,
-            user,
-            README_COMMIT_MESSAGE,
-            self._readme(
+        def readme_files() -> Files:
+            if not readme:
+                return {}
+            return self._readme(
                 repository, app_list.channel, apps, published, readme_template
-            ),
-        )
+            )
+
+        self.output.divider()
+        await self._commit(repository, user, README_COMMIT_MESSAGE, readme_files())
 
         for app in apps:
-            if app.latest is None or not app.needs_update(app.latest, force=self.force):
+            latest = app.update_to(force=self.force)
+            if latest is None:
                 continue
 
             self.output.section(f"Updating app {self.output.plain(app.target)}")
-            files = await self._app_files(app, app.latest, app_list, paths)
+            try:
+                files = await self._app_files(app, latest, app_list, paths)
 
-            published.add(app.target)
-            files |= self._readme(
-                repository, app_list.channel, apps, published, readme_template
-            )
+                published.add(app.target)
+                files |= readme_files()
 
-            message = commit_message(
-                app.latest.details.name, app.latest.version, forced=self.force
-            )
-            await self._commit(repository, user, message, files)
+                message = commit_message(
+                    latest.details.name, latest.version, forced=self.force
+                )
+                await self._commit(repository, user, message, files)
+            except STOP_THE_RUN:
+                raise
+            except RepositoryUpdaterError as error:
+                # Nothing of this app got committed; the README keeps it at
+                # the version it has.
+                published.discard(app.target)
+                app.error = error
+                self.output.error(str(error))
+
+        self.output.end_section()
+        self._raise_failures(apps)
+
+    def _raise_failures(self, apps: list[App]) -> None:
+        """Report every app that failed, and fail the run when there are any."""
+        failed = [app for app in apps if app.error is not None]
+        if not failed:
+            return
+
+        self.output.divider()
+        for app in failed:
+            self.output.error(f"App {app.target}: {app.error}")
+        raise AppsFailedError([app.target for app in failed])
 
     async def _app_list(self, repository: Repository) -> AppList:
         """Fetch and parse the app list the apps repository declares."""
@@ -210,20 +266,33 @@ class Updater:
         return [task.result() for task in tasks]
 
     async def _load_app(self, channel: Channel, entry: AppEntry) -> App:
-        """Load what the apps repository holds of an app, and what is out."""
-        app = App(
-            entry=entry,
-            repository=await self.github.repository(entry.repository),
-            updating=self._is_selected(entry),
-        )
-        await self._load_current(app)
+        """Load what the apps repository holds of an app, and what is out.
+
+        An app that fails keeps its error, so the other apps carry on.
+        """
+        app = App(entry=entry, updating=self._is_selected(entry))
+        try:
+            repository = await self.github.repository(entry.repository)
+            app.repository = repository
+            await self._load_current(app, repository)
+        except STOP_THE_RUN:
+            raise
+        except RepositoryUpdaterError as error:
+            app.error = error
+            app.current_known = False
+            return app
 
         if app.updating:
-            await self._load_latest(app, channel)
+            try:
+                await self._load_latest(app, repository, channel)
+            except STOP_THE_RUN:
+                raise
+            except RepositoryUpdaterError as error:
+                app.error = error
 
         return app
 
-    async def _load_current(self, app: App) -> None:
+    async def _load_current(self, app: App, repository: Repository) -> None:
         """Load the version of an app the apps repository holds now."""
         for filename in CONFIG_FILENAMES:
             path = f"{app.target}/{filename}"
@@ -242,6 +311,7 @@ class Updater:
                 ),
                 details=AppDetails.from_config(location, config),
                 config_filename=filename,
+                repository=repository,
             )
             return
 
@@ -256,7 +326,9 @@ class Updater:
 
         raise AppVersionNotFoundError(repository, version)
 
-    async def _load_latest(self, app: App, channel: Channel) -> None:
+    async def _load_latest(
+        self, app: App, app_repository: Repository, channel: Channel
+    ) -> None:
         """Load the version of an app its channel publishes now."""
         repository = app.entry.repository
 
@@ -283,6 +355,7 @@ class Updater:
                 f"{repository}/{app.entry.app_target}/{filename}", config
             ),
             config_filename=filename,
+            repository=app_repository,
             config=config,
             release=release,
         )
@@ -317,7 +390,10 @@ class Updater:
         """Show what was found for every app, in the order of the list."""
         for app in apps:
             self.output.section(f"App {self.output.plain(app.target)}")
-            self.output.info(f"Source: {self.output.plain(app.repository.html_url)}")
+            if app.repository is not None:
+                self.output.info(
+                    f"Source: {self.output.plain(app.repository.html_url)}"
+                )
 
             if app.current is None:
                 current = self.output.emphasis("Not available")
@@ -328,6 +404,10 @@ class Updater:
                     f"({version.commit.sha[:7]})"
                 )
             self.output.info(f"Current version: {current}")
+
+            if app.error is not None:
+                self.output.warning(f"Skipping: {self.output.plain(app.error)}")
+                continue
 
             if app.latest is None:
                 continue
@@ -354,7 +434,7 @@ class Updater:
             channel=channel,
             details=state.details,
             version=state.version,
-            repository=app.repository,
+            repository=state.repository,
         )
 
     def _readme(
