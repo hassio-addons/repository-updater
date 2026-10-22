@@ -41,13 +41,10 @@ dependencies = [
   "awesomeversion>=25.8.0",
   "click>=8.5.0,<9",
   "emoji>=2.16.0,<3",
-  "GitPython>=3.2.1,<4",
   "Jinja2>=3.1.6,<4",
   "mashumaro>=3.23,<4",
   "orjson>=3.13.0,<4",
-  "PyGithub>=2.10.0,<3",
   "PyYAML>=6.0.3,<7",
-  "semver>=3.1.0,<4",
   "yarl>=1.25.1,<2",
 ]
 
@@ -58,7 +55,6 @@ Issues = "https://github.com/hassio-addons/repository-updater/issues"
 
 [project.scripts]
 repository-updater = "repositoryupdater.cli:repository_updater"
-repository-updater-git-askpass = "repositoryupdater.cli:git_askpass"
 
 [dependency-groups]
 # Pinned exactly for reproducible local and CI runs. CI installs this group
@@ -109,22 +105,13 @@ source_pkgs = ["repositoryupdater"]
 
 [tool.coverage.report]
 show_missing = true
-# covdefaults measures the tests too. The GitHub heavy load paths are hard to
-# test on the current sync code; this goes up to 95 with the async rewrite.
-fail_under = 85
+fail_under = 95
 
 [tool.codespell]
 ignore-words-list = "hass"
 
 [tool.ty.environment]
 python-version = "3.12"
-
-[tool.ty.rules]
-# App and Repository start with their state set to None and fill it in
-# load(), which ty cannot follow. That two-phase setup goes away with the
-# async rewrite; this goes back to an error then, together with dropping
-# --exit-zero-on-warning from the prek hook and the typing workflow.
-unresolved-attribute = "warn"
 
 [tool.pylint.MASTER]
 ignore = ["tests"]

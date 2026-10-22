@@ -1,12 +1,12 @@
 """Tests for the command line interface."""
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,too-many-arguments,too-many-positional-arguments
 
 from __future__ import annotations
 
 import runpy
-from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, patch
+from typing import TYPE_CHECKING, Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
@@ -15,16 +15,18 @@ from repositoryupdater import APP_VERSION, cli
 from repositoryupdater.exceptions import RepositoryUpdaterError
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from syrupy.assertion import SnapshotAssertion
 
 ARGS = ["--token", "secret", "--repository", "hassio-addons/repository"]
-
 
 ENVIRONMENT_VARIABLES = (
     "GITHUB_REPOSITORY",
     "GITHUB_TOKEN",
     "INPUT_ADDON",
     "INPUT_APP",
+    "INPUT_DRY_RUN",
     "INPUT_FORCE",
     "INPUT_REPOSITORY",
     "INPUT_TOKEN",
@@ -51,6 +53,26 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
+@pytest.fixture
+def github() -> Generator[MagicMock]:
+    """Replace the GitHub client the CLI opens."""
+    with patch.object(cli, "GitHub") as github:
+        yield github
+
+
+@pytest.fixture
+def updater() -> Generator[MagicMock]:
+    """Replace the updater the CLI runs, keeping what it was given."""
+    with patch.object(cli, "Updater") as updater:
+        updater.return_value.run = AsyncMock()
+        yield updater
+
+
+def options(updater: MagicMock) -> dict[str, Any]:
+    """Return the options the updater was created with."""
+    return dict(updater.call_args.kwargs)
+
+
 def test_version(runner: CliRunner) -> None:
     """Test the version option shows the installed version."""
     result = runner.invoke(cli.repository_updater, ["--version"])
@@ -67,41 +89,38 @@ def test_help(runner: CliRunner, snapshot: SnapshotAssertion) -> None:
     assert result.output == snapshot
 
 
-def test_run_loads_updates_and_cleans_up(runner: CliRunner) -> None:
-    """Test a run hands the options to the repository and cleans up after."""
-    with (
-        patch.object(cli, "GitHub") as github,
-        patch.object(cli, "Repository") as repository,
-    ):
-        github.return_value.get_user.return_value.name = "Frenck"
-        result = runner.invoke(
-            cli.repository_updater, [*ARGS, "--app", "example", "--force"]
-        )
+def test_run(runner: CliRunner, github: MagicMock, updater: MagicMock) -> None:
+    """Test a run hands the options to the updater and runs it."""
+    result = runner.invoke(
+        cli.repository_updater, [*ARGS, "--app", "example", "--force", "--dry-run"]
+    )
 
     assert result.exit_code == 0, result.output
-    assert "Authenticated with GitHub as Frenck" in result.output
+    assert APP_VERSION in result.output
     github.assert_called_once_with("secret")
+    assert options(updater) == {
+        "github": github.return_value.__aenter__.return_value,
+        "output": options(updater)["output"],
+        "repository_name": "hassio-addons/repository",
+        "app_filter": "example",
+        "force": True,
+        "dry_run": True,
+    }
+    updater.return_value.run.assert_awaited_once_with()
 
-    _, kwargs = repository.call_args
-    assert repository.call_args.args[1:] == ("hassio-addons/repository", "example")
-    assert kwargs["force"] is True
 
-    apps_repository = repository.return_value
-    apps_repository.load.assert_called_once_with()
-    apps_repository.update.assert_called_once_with()
-    apps_repository.cleanup.assert_called_once_with()
-
-
-def test_addon_is_an_alias_for_app(runner: CliRunner) -> None:
+@pytest.mark.usefixtures("github")
+def test_addon_is_an_alias_for_app(runner: CliRunner, updater: MagicMock) -> None:
     """Test the deprecated --addon option still selects an app."""
-    with patch.object(cli, "GitHub"), patch.object(cli, "Repository") as repository:
-        result = runner.invoke(cli.repository_updater, [*ARGS, "--addon", "example"])
+    result = runner.invoke(cli.repository_updater, [*ARGS, "--addon", "example"])
 
     assert result.exit_code == 0, result.output
-    assert repository.call_args.args[2] == "example"
+    assert options(updater)["app_filter"] == "example"
 
 
-def test_options_from_github_action_inputs(runner: CliRunner) -> None:
+def test_options_from_github_action_inputs(
+    runner: CliRunner, github: MagicMock, updater: MagicMock
+) -> None:
     """Test a Docker action run, where every input arrives as INPUT_*.
 
     GitHub sets inputs that were not given to an empty string, so the
@@ -115,21 +134,17 @@ def test_options_from_github_action_inputs(runner: CliRunner) -> None:
         "INPUT_APP": "",
         "INPUT_ADDON": "example",
         "INPUT_FORCE": "true",
+        "INPUT_DRY_RUN": "false",
     }
 
-    with (
-        patch.object(cli, "GitHub") as github,
-        patch.object(cli, "Repository") as repository,
-    ):
-        result = runner.invoke(cli.repository_updater, [], env=environment)
+    result = runner.invoke(cli.repository_updater, [], env=environment)
 
     assert result.exit_code == 0, result.output
     github.assert_called_once_with("secret")
-    assert repository.call_args.args[1:] == (
-        "hassio-addons/repository-edge",
-        "example",
-    )
-    assert repository.call_args.kwargs["force"] is True
+    assert options(updater)["repository_name"] == "hassio-addons/repository-edge"
+    assert options(updater)["app_filter"] == "example"
+    assert options(updater)["force"] is True
+    assert options(updater)["dry_run"] is False
 
 
 @pytest.mark.parametrize(
@@ -137,13 +152,15 @@ def test_options_from_github_action_inputs(runner: CliRunner) -> None:
     [
         ({"INPUT_FORCE": "false"}, "force", False),
         ({"INPUT_FORCE": ""}, "force", False),
-        ({"INPUT_APP": "new", "INPUT_ADDON": "old"}, "app", "new"),
+        ({"INPUT_DRY_RUN": "true"}, "dry_run", True),
+        ({"INPUT_APP": "new", "INPUT_ADDON": "old"}, "app_filter", "new"),
         ({"INPUT_TOKEN": "", "GITHUB_TOKEN": "fallback"}, "token", "fallback"),
         ({"INPUT_TOKEN": "input", "GITHUB_TOKEN": "fallback"}, "token", "input"),
     ],
     ids=[
         "force false",
         "force empty",
+        "dry run",
         "app over addon",
         "token fallback",
         "token input first",
@@ -151,6 +168,8 @@ def test_options_from_github_action_inputs(runner: CliRunner) -> None:
 )
 def test_environment_precedence(
     runner: CliRunner,
+    github: MagicMock,
+    updater: MagicMock,
     environment: dict[str, str],
     option: str,
     expected: object,
@@ -162,83 +181,39 @@ def test_environment_precedence(
         **environment,
     }
 
-    with (
-        patch.object(cli, "GitHub") as github,
-        patch.object(cli, "Repository") as repository,
-    ):
-        result = runner.invoke(cli.repository_updater, [], env=environment)
+    result = runner.invoke(cli.repository_updater, [], env=environment)
 
     assert result.exit_code == 0, result.output
-    received = {
-        "token": github.call_args.args[0],
-        "app": repository.call_args.args[2],
-        "force": repository.call_args.kwargs["force"],
-    }
+    received = {**options(updater), "token": github.call_args.args[0]}
     assert received[option] == expected
 
 
-def test_command_line_beats_environment(runner: CliRunner) -> None:
+@pytest.mark.usefixtures("github")
+def test_command_line_beats_environment(runner: CliRunner, updater: MagicMock) -> None:
     """Test an option given on the command line wins over the environment."""
-    with patch.object(cli, "GitHub"), patch.object(cli, "Repository") as repository:
-        result = runner.invoke(
-            cli.repository_updater,
-            [*ARGS, "--app", "from-argument"],
-            env={"INPUT_APP": "from-environment"},
-        )
+    result = runner.invoke(
+        cli.repository_updater,
+        [*ARGS, "--app", "from-argument"],
+        env={"INPUT_APP": "from-environment"},
+    )
 
     assert result.exit_code == 0, result.output
-    assert repository.call_args.args[2] == "from-argument"
+    assert options(updater)["app_filter"] == "from-argument"
 
 
-def test_error_is_reported_and_still_cleans_up(runner: CliRunner) -> None:
-    """Test an updater error ends the run cleanly, after the cleanup."""
-    with patch.object(cli, "GitHub"), patch.object(cli, "Repository") as repository:
-        apps_repository = repository.return_value
-        apps_repository.update.side_effect = RepositoryUpdaterError("Kaboom")
-        result = runner.invoke(cli.repository_updater, ARGS)
+def test_error_is_reported(
+    runner: CliRunner,
+    github: MagicMock,
+    updater: MagicMock,
+) -> None:
+    """Test an updater error ends the run with its message, and closes GitHub."""
+    updater.return_value.run.side_effect = RepositoryUpdaterError("Kaboom")
+
+    result = runner.invoke(cli.repository_updater, ARGS)
 
     assert result.exit_code == 1
     assert "Error: Kaboom" in result.output
-    apps_repository.cleanup.assert_called_once_with()
-
-
-@pytest.mark.parametrize(
-    ("prompt", "expected"),
-    [
-        ("Username for 'https://github.com': ", "the-token"),
-        ("Password for 'https://the-token@github.com': ", ""),
-    ],
-)
-def test_git_askpass_answers(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-    prompt: str,
-    expected: str,
-) -> None:
-    """Test the askpass helper answers the prompts Git asks."""
-    monkeypatch.setenv("GIT_USERNAME", "the-token")
-    monkeypatch.setenv("GIT_PASSWORD", "")
-    monkeypatch.setattr(cli, "argv", ["askpass", prompt])
-
-    with pytest.raises(SystemExit) as exit_info:
-        cli.git_askpass()
-
-    assert exit_info.value.code is None
-    assert capsys.readouterr().out == f"{expected}\n"
-
-
-def test_git_askpass_refuses_unknown_prompt(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """Test the askpass helper answers nothing it does not recognize."""
-    monkeypatch.setenv("GIT_USERNAME", "the-token")
-    monkeypatch.setattr(cli, "argv", ["askpass", "Passphrase for key: "])
-
-    with pytest.raises(SystemExit) as exit_info:
-        cli.git_askpass()
-
-    assert exit_info.value.code == 1
-    assert capsys.readouterr().out == ""
+    github.return_value.__aexit__.assert_awaited_once()
 
 
 def test_main_module_runs_the_cli() -> None:

@@ -36,4 +36,4 @@ jobs:
       - name: 🏗 Install dependencies
         run: uv sync --locked --group dev
       - name: 🚀 Run ty
-        run: uv run --no-sync ty check --exit-zero-on-warning --output-format github
+        run: uv run --no-sync ty check --output-format github

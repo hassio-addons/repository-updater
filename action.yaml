@@ -24,6 +24,10 @@ inputs:
     description: Force repository update, even if no changes are detected
     default: "false"
     required: false
+  dry_run:
+    description: Show what would be committed, without committing
+    default: "false"
+    required: false
 
 # The image of this very release, so the action never builds anything when
 # it runs. The release workflow refuses to publish when this does not match
