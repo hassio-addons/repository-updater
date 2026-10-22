@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
 
 class RepositoryUpdaterError(Exception):
@@ -87,3 +87,14 @@ class InvalidArchiveError(RepositoryUpdaterError):
     def __init__(self, repository: str) -> None:
         """Initialize with the repository the tarball came from."""
         super().__init__(f"The archive of {repository} cannot be read")
+
+
+class AppsFailedError(RepositoryUpdaterError):
+    """Raised at the end of a run in which some apps could not be updated."""
+
+    def __init__(self, targets: Sequence[str]) -> None:
+        """Initialize with the apps that failed."""
+        self.targets = list(targets)
+        noun = "app" if len(self.targets) == 1 else "apps"
+        names = ", ".join(self.targets)
+        super().__init__(f"{len(self.targets)} {noun} could not be updated: {names}")

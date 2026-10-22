@@ -12,17 +12,16 @@ from typing import TYPE_CHECKING
 
 import pytest
 import yaml
+from rich.console import Console
 
 from repositoryupdater.exceptions import (
-    AppConfigNotFoundError,
-    AppReleaseNotFoundError,
-    AppVersionNotFoundError,
-    InvalidAppConfigError,
+    AppsFailedError,
     RepositoryAppListNotFoundError,
 )
 from repositoryupdater.github import (
     Commit,
     GitHub,
+    GitHubAuthenticationError,
     GitHubNotFoundError,
     Release,
     Repository,
@@ -268,6 +267,15 @@ def apps_repository() -> FakeRepository:
     )
 
 
+async def failing_run(updater: Updater) -> str:
+    """Run until it fails, and return what the run printed about the failure."""
+    with pytest.raises(AppsFailedError) as exception_info:
+        await updater.run()
+
+    assert exception_info.value.targets == ["example"]
+    return updater.output.console.export_text()
+
+
 def only_commit(github: FakeGitHub) -> Committed:
     """Return the one commit the updater made."""
     assert len(github.commits) == 1
@@ -284,7 +292,7 @@ def updater(
     """Return an updater for the apps repository."""
     return Updater(
         github=github,
-        output=Output(),
+        output=Output(Console(record=True, width=200, emoji=False, soft_wrap=True)),
         repository_name=APPS_REPOSITORY,
         app_filter=app_filter,
         force=force,
@@ -592,8 +600,9 @@ async def test_current_version_unknown(
     """Test a version the app repository does not know fails clearly."""
     apps_repository.files["example/config.yaml"] = app_config("0.0.1")
 
-    with pytest.raises(AppVersionNotFoundError, match=r"version 0\.0\.1"):
-        await updater(FakeGitHub(apps_repository, app_repository)).run()
+    output = await failing_run(updater(FakeGitHub(apps_repository, app_repository)))
+
+    assert "has no tag or commit for version 0.0.1" in output
 
 
 async def test_current_config_without_version(
@@ -604,8 +613,9 @@ async def test_current_config_without_version(
     del config["version"]
     apps_repository.files["example/config.yaml"] = yaml.dump(config).encode()
 
-    with pytest.raises(InvalidAppConfigError, match='missing "version"'):
-        await updater(FakeGitHub(apps_repository, app_repository)).run()
+    output = await failing_run(updater(FakeGitHub(apps_repository, app_repository)))
+
+    assert 'it is missing "version"' in output
 
 
 async def test_nothing_to_publish(
@@ -614,8 +624,9 @@ async def test_nothing_to_publish(
     """Test a channel without a release to publish fails clearly."""
     app_repository.releases = [release("v2.0.0-beta.1")]
 
-    with pytest.raises(AppReleaseNotFoundError, match='on the "stable" channel'):
-        await updater(FakeGitHub(apps_repository, app_repository)).run()
+    output = await failing_run(updater(FakeGitHub(apps_repository, app_repository)))
+
+    assert 'has no version to publish on the "stable" channel' in output
 
 
 async def test_release_without_config(
@@ -624,5 +635,137 @@ async def test_release_without_config(
     """Test a release without an app configuration fails clearly."""
     del app_repository.snapshots["2" * 40]["example/config.yaml"]
 
-    with pytest.raises(AppConfigNotFoundError, match="app-example/example at 2222222"):
-        await updater(FakeGitHub(apps_repository, app_repository)).run()
+    output = await failing_run(updater(FakeGitHub(apps_repository, app_repository)))
+
+    assert "app-example/example at 2222222" in output
+
+
+def add_other_app(apps_repository: FakeRepository) -> FakeRepository:
+    """Add a second app, at v2.0.0 with v2.1.0 out, to the apps repository."""
+    apps_repository.files[".apps.yml"] += (
+        b"  other:\n"
+        b"    image: ghcr.io/hassio-addons/other\n"
+        b"    repository: hassio-addons/app-other\n"
+        b"    target: other\n"
+    )
+    apps_repository.files["other/config.yaml"] = app_config(
+        "2.0.0", name="Other", slug="other"
+    )
+    apps_repository.files["README.md"] += b"- Other v2.0.0\n"
+
+    other = FakeRepository(name="hassio-addons/app-other")
+    other.publish("4" * 40, {"other/config.yaml": app_config()}, tag="v2.0.0")
+    other.publish(
+        "5" * 40, {"other/config.yaml": app_config(name="Other")}, tag="v2.1.0"
+    )
+    other.releases = [release("v2.1.0"), release("v2.0.0")]
+    return other
+
+
+async def test_failing_app_does_not_stop_the_others(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test the other apps still get their update, and the run still fails."""
+    other = add_other_app(apps_repository)
+    # The example app cannot publish anything on stable.
+    app_repository.releases = [release("v2.0.0-beta.1")]
+    github = FakeGitHub(apps_repository, app_repository, other)
+
+    output = await failing_run(updater(github))
+
+    published = only_commit(github)
+    assert published.message == ":tada: Release of app Other 2.1.0"
+    # The README still shows the failed app, at the version it has.
+    assert apps_repository.files["README.md"] == (
+        b"# hassio-addons/repository\n- Example v1.0.0\n- Other v2.1.0\n"
+    )
+    assert "Skipping: App repository hassio-addons/app-example" in output
+
+
+async def test_unreadable_app_leaves_the_readme_alone(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test an app that cannot even be read keeps the README as it is.
+
+    Rendering it without that app would drop the app from the README.
+    """
+    other = add_other_app(apps_repository)
+    apps_repository.files["example/config.yaml"] = app_config("0.0.1")
+    before = apps_repository.files["README.md"]
+    github = FakeGitHub(apps_repository, app_repository, other)
+
+    output = await failing_run(updater(github))
+
+    published = only_commit(github)
+    assert published.message == ":tada: Release of app Other 2.1.0"
+    assert "README.md" not in published.files
+    assert apps_repository.files["README.md"] == before
+    assert "The README of the apps repository stays as it is" in output
+
+
+async def test_missing_app_repository(apps_repository: FakeRepository) -> None:
+    """Test an app whose own repository is gone fails without stopping the run."""
+    other = add_other_app(apps_repository)
+    github = FakeGitHub(apps_repository, other)
+
+    output = await failing_run(updater(github))
+
+    assert only_commit(github).message == ":tada: Release of app Other 2.1.0"
+    assert "No repository hassio-addons/app-example" in output
+
+
+class BrokenArchive(FakeGitHub):
+    """A GitHub that cannot serve the archive of the example app."""
+
+    async def tarball(self, repository: str, ref: str) -> bytes:
+        """Fail for the example app, and serve the rest."""
+        if repository == APP_REPOSITORY:
+            msg = "Archive gone"
+            raise GitHubNotFoundError(msg, status=404)
+        return await super().tarball(repository, ref)
+
+
+async def test_failure_while_updating(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test an app failing halfway its update commits nothing of it."""
+    other = add_other_app(apps_repository)
+    github = BrokenArchive(apps_repository, app_repository, other)
+
+    output = await failing_run(updater(github))
+
+    published = only_commit(github)
+    assert published.message == ":tada: Release of app Other 2.1.0"
+    # The README keeps the failed app at the version it has.
+    readme = published.files["README.md"]
+    assert readme is not None
+    assert b"- Example v1.0.0" in readme
+    assert (
+        yaml.safe_load(apps_repository.files["example/config.yaml"])["version"]
+        == "1.0.0"
+    )
+    assert "Downloading app source...Failed!" in output
+    assert "Archive gone" in output
+
+
+class RejectingToken(FakeGitHub):
+    """A GitHub that rejects the token once the apps get loaded."""
+
+    async def repository(self, repository: str) -> Repository:
+        """Reject the token for the example app."""
+        if repository == APP_REPOSITORY:
+            msg = "GitHub rejected the token"
+            raise GitHubAuthenticationError(msg, status=401)
+        return await super().repository(repository)
+
+
+async def test_rejected_token_stops_the_run(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test an error that hits every app stops the run right away."""
+    github = RejectingToken(apps_repository, app_repository)
+
+    with pytest.raises(GitHubAuthenticationError):
+        await updater(github).run()
+
+    assert not github.commits

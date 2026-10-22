@@ -77,3 +77,17 @@ def test_end_section_without_section(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_default_console() -> None:
     """Test the output writes to standard output by default."""
     assert Output().console.file is not None
+
+
+def test_error_closes_an_open_step(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test an error interrupting a step puts the step to rest first."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "false")
+    buffer = io.StringIO()
+    output = Output(Console(file=buffer, no_color=True))
+
+    output.step("Downloading app source")
+    output.error("Archive gone")
+
+    assert (
+        buffer.getvalue() == "Downloading app source...Failed!\nError: Archive gone\n"
+    )
