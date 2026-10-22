@@ -28,11 +28,39 @@ inputs:
     description: Show what would be committed, without committing
     default: "false"
     required: false
+  cache:
+    description: Remember what the apps repository holds between runs, to skip reloading it
+    default: "true"
+    required: false
 
-# The image of this very release, so the action never builds anything when
-# it runs. The release workflow refuses to publish when this does not match
-# the version being released. GitHub hands the inputs over as INPUT_*
-# environment variables, which the CLI reads.
+# A composite action, so it can keep the cache between runs with
+# actions/cache, which a Docker action cannot use. The updater runs from the
+# image of this very release, so nothing gets built when it runs; the
+# release workflow refuses to publish when it does not match the version
+# being released.
 runs:
-  using: "docker"
-  image: "docker://ghcr.io/hassio-addons/repository-updater:2.0.2"
+  using: composite
+  steps:
+    - name: 🏗 Restore the cache
+      if: inputs.cache == 'true'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        # Inside the workspace, which GitHub mounts into the container.
+        path: .repository-updater-cache
+        # A new key every run saves the newest cache; the prefix restores
+        # the one before.
+        key: repository-updater-${{ inputs.repository || github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: |
+          repository-updater-${{ inputs.repository || github.repository }}-
+    - name: 🚀 Run the Repository Updater
+      uses: docker://ghcr.io/hassio-addons/repository-updater:2.0.2
+      env:
+        INPUT_TOKEN: ${{ inputs.token }}
+        INPUT_REPOSITORY: ${{ inputs.repository }}
+        INPUT_APP: ${{ inputs.app }}
+        INPUT_ADDON: ${{ inputs.addon }}
+        INPUT_FORCE: ${{ inputs.force }}
+        INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        INPUT_CACHE: ${{ inputs.cache }}
+        # Relative to the workspace, which is where the container starts.
+        INPUT_CACHE_DIR: .repository-updater-cache

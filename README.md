@@ -132,6 +132,20 @@ jobs:
           token: ${{ secrets.UPDATER_TOKEN }}
 ```
 
+The action takes these inputs:
+
+| Input        | Default                   | What it does                                                   |
+| ------------ | ------------------------- | -------------------------------------------------------------- |
+| `token`      |                           | GitHub token that may commit to the apps repository. Required. |
+| `repository` | The repository it runs in | The apps repository to update.                                 |
+| `app`        |                           | Update a single app. `addon` is the deprecated name for it.    |
+| `force`      | `false`                   | Update apps even when they look up to date.                    |
+| `dry_run`    | `false`                   | Show what would be committed, without committing.              |
+| `cache`      | `true`                    | Keep the cache between runs with `actions/cache`.              |
+
+Every app gets its own group in the log, and an app that fails shows up as an
+error annotation on the run, while the other apps carry on.
+
 Once that workflow is in place, from an app repository, you can trigger
 the above workflow to run. This can be done by dispatching a signal to
 the updater workflow:
