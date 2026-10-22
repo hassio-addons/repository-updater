@@ -111,7 +111,7 @@ Container Registry, for amd64 and arm64. This allows for quick use without a
 Python setup, for example on a CI server.
 
 ```bash
-docker run --rm -e GITHUB_TOKEN ghcr.io/hassio-addons/repository-updater:latest \
+docker run --rm -e GITHUB_TOKEN ghcr.io/hassio-addons/repository-updater:3.0.0 \
   --repository hassio-addons/repository
 ```
 
@@ -119,15 +119,17 @@ All the options from the previous chapter apply, including their
 environment variables. For example, this shows the current version:
 
 ```bash
-docker run --rm ghcr.io/hassio-addons/repository-updater:latest --version
+docker run --rm ghcr.io/hassio-addons/repository-updater:3.0.0 --version
 ```
 
-Every image is signed with [cosign][cosign] and carries a build provenance
-attestation, which can be checked with:
+Images are only tagged with their exact version; there is no `latest`, and
+no tag moves along with a new release. Every image is signed with
+[cosign][cosign] and carries a build provenance attestation, which can be
+checked with:
 
 ```bash
 gh attestation verify --owner hassio-addons \
-  oci://ghcr.io/hassio-addons/repository-updater:latest
+  oci://ghcr.io/hassio-addons/repository-updater:3.0.0
 ```
 
 ## Using a GitHub Action
@@ -148,12 +150,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🚀 Run Repository Updater
-        uses: hassio-addons/repository-updater@v2
+        uses: hassio-addons/repository-updater@v3.0.0
         with:
           app: ${{ github.event.client_payload.app }}
           repository: ${{ github.repository }}
           token: ${{ secrets.UPDATER_TOKEN }}
 ```
+
+Releases are immutable: once published, a version tag can never point
+anywhere else. Pinning the action to a version, like above, is therefore
+safe. Pinning it to the full commit SHA of that version is safer still, and
+what we recommend; Renovate and Dependabot keep such a pin up to date:
+
+```yaml
+uses: hassio-addons/repository-updater@<full commit SHA> # v3.0.0
+```
+
+There are no tags like `v3` that move along with every release.
 
 The action takes these inputs:
 
@@ -360,7 +373,8 @@ anything. [AGENTS.md](AGENTS.md) has more on how the code is laid out.
 ## Changelog & Releases
 
 This repository keeps a change log using [GitHub's releases][releases]
-functionality.
+functionality. Releases are immutable: once published, a release and its tag
+never change, and its package and image carry provenance attestations.
 
 Releases are based on [Semantic Versioning][semver], and use the format
 of `MAJOR.MINOR.PATCH`. In a nutshell, the version will be incremented

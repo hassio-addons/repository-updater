@@ -111,6 +111,17 @@ See [AI_POLICY.md](AI_POLICY.md) for the contribution policy around AI tooling.
 - coverage needs `source_pkgs`, not `source`: with the src layout a bare
   package name silently measures nothing.
 
+## Releasing
+
+Releases are immutable: once published, a release and its tag never change.
+So nothing gets published by hand. Release-drafter keeps a draft with the
+next version; the release pull request points `action.yaml` at that version
+(`docker://ghcr.io/hassio-addons/repository-updater:<version>`); then the
+Release workflow, started with "Run workflow" on `main`, checks the draft and
+`action.yaml`, builds, publishes the draft at that exact commit, and only
+then pushes to PyPI and GHCR. Every tag is an exact version; nothing like
+`v3` or `latest` moves along.
+
 ## Where to read next
 
 - `README.md`: the app list format, channels and the README templates.
