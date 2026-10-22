@@ -1,21 +1,29 @@
 # Home Assistant Community Apps Repository Updater
 
-[![PyPi Release][pypi-shield]][pypi]
-[![GitHub Activity][commits-shield]][commits]
-[![License][license-shield]](LICENSE.md)
-
+[![PyPI Release][pypi-shield]][pypi]
+[![Python Versions][python-versions-shield]][pypi]
 ![Project Stage][project-stage-shield]
 ![Project Maintenance][maintenance-shield]
+[![License][license-shield]](LICENSE.md)
+
+[![Build Status][build-shield]][build]
+[![Code Coverage][codecov-shield]][codecov]
+[![OpenSSF Scorecard][scorecard-shield]][scorecard]
 
 [![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
 
 ## About
 
-Reads remote app repositories, determines versions and generates
-changelogs to update the app repository fully automated.
+Keeps a Home Assistant apps repository up to date with the apps it lists,
+fully automated. For every app, it finds the newest version the repository's
+channel may publish, copies the app's configuration, static files and
+changelog into the apps repository, renders the READMEs from their templates,
+and commits the result. One commit per app, straight through the GitHub API,
+without cloning anything.
 
-Mainly used by the Home Assistant Community Apps project.
+It powers the [Home Assistant Community Apps][repository] project, and runs as
+a command line tool, a container image and a GitHub Action.
 
 Please note, this program cannot be used with the general documented
 Home Assistant app repository approach and only works in the setup where
@@ -23,11 +31,28 @@ each app has its own GitHub repository.
 
 ## Installation
 
-Using pip, the Python package manager:
+The Repository Updater needs Python 3.12 or newer. Install it with pip, or
+run it straight away with [uv][uv]:
 
 ```bash
 pip install repository-updater
+uvx repository-updater --help
 ```
+
+It is also available as a container image and as a GitHub Action, see below.
+
+### The token
+
+The Repository Updater needs a GitHub token that may commit to the apps
+repository. A fine-grained personal access token needs read and write access
+to the contents of the apps repository; a classic one needs the `repo` scope.
+Public app repositories need nothing extra; private ones need read access to
+their contents as well. To get a token, see the GitHub article:
+[Create a token][token].
+
+The commits are made in the name of the account the token belongs to. When
+that account keeps its email address private, the commits use its GitHub
+noreply address.
 
 ## Usage
 
@@ -68,8 +93,6 @@ Every option can also be set through the environment variables listed with
 it. When more than one is set, the first one that is not empty wins, and an
 option on the command line always beats the environment. `--addon` and the
 `INPUT_ADDON` variable are deprecated; use `--app` and `INPUT_APP` instead.
-
-To get a GitHub token, please see the GitHub article: [Create a token][token]
 
 ### The cache
 
@@ -186,16 +209,19 @@ apps:
   example:
     repository: hassio-addons/app-example
     target: example
-    image: hassioaddons/example-{arch}
+    image: ghcr.io/hassio-addons/example
   another:
     repository: hassio-addons/app-another
     target: homebridge
-    image: ghcr.io/hassio-addons/test-{arch}
+    image: ghcr.io/hassio-addons/another
   demo:
     repository: hassio-addons/app-demo
     target: src
     image: ghcr.io/hassio-addons/demo/{arch}
 ```
+
+Older apps repositories call this file `.addons.yml` or `.hassio-addons.yml`,
+and the `apps` key `addons`; both still work.
 
 The target in the apps repository is specified as the key for each app,
 this will be the directory name inside the apps repository as well. This is
@@ -209,10 +235,10 @@ git repo that contains the actual app.
 `repository` specified the location of the app on GitHub. This must be
 in `organization/repository` or `username/repository` format.
 
-Finally, the `image` key defines the Docker container images on Docker Hub
-or the GitHub Container Registry for this app. `{arch}` can be used as a
-placeholder for the architecture and is automatically replaced internally by
-the Repository Updater.
+Finally, the `image` key defines the container image of this app, on the
+GitHub Container Registry or any other registry. For an image per
+architecture, `{arch}` is the placeholder for the architecture; a
+multi-architecture image needs none.
 
 By default, each release replaces the app's `CHANGELOG.md` with its release
 notes. Set `changelog: prepend` at the top level of `.apps.yml` to keep the
@@ -240,7 +266,9 @@ able to update the `README.md` file for you each run.
 
 This is done using a Jinja2 template. Simply create a file called `.README.j2`
 in the root of your apps repository. Most information is collected
-from the app `config.json` and GitHub repo.
+from the configuration file of each app (`config.yaml`, `config.yml` or
+`config.json`) and its GitHub repository. An app can have a `.README.j2` of
+its own as well, which gets the variables of that one app.
 
 The following variables are available in your templates and are passed into it
 upon rendering your template.
@@ -251,7 +279,7 @@ upon rendering your template.
 - **description**: The GitHub apps repository description
 - **homepage**: The GitHub apps repository specified homepage URL
 - **issues**: The URL to the issues listing of the GitHub apps repository
-- **name**: The full GitHub name, e.g., `hassio-addons/repository`
+- **name**: The full GitHub name, like `hassio-addons/repository`
 - **repo**: The full URL to the GitHub apps repository
 
 In the above variables, a list of `apps` was specified. Each item in this
@@ -265,13 +293,15 @@ list contains the following variables:
 - **archs**: List of supported architectures by this app
 - **slug**: The app slug
 - **target**: The target directory of the app inside the apps repository
-- **image**: The (untouched) Docker Hub container image name
+- **image**: The container image, as written in `.apps.yml`
 - **images**: Dictionary of images per architecture
-  - **aarch64**: `aarch64` DockerHub image (if arch is supported)
-  - **amd64**: `amd64` DockerHub image (if arch is supported)
-- **version**: The version of the app
+  - **aarch64**: `aarch64` image (if the app supports it)
+  - **amd64**: `amd64` image (if the app supports it)
+- **channel**: The channel of the apps repository
+- **version**: The version of the app, like `v1.2.3` for a release, or the
+  short SHA of a commit on edge
 - **commit**: Full SHA of the commit bound to the current version
-- **date**: Date and time of the above commit/version
+- **date**: Date and time of the release, or of the commit on edge
 
 ## Examples
 
@@ -279,10 +309,10 @@ It is quite a complex setup to create an example for in this little document.
 Nevertheless, see the [Home Assistant Community Apps Repository][repository]
 for an example of `.README.j2` and `.apps.yml` files.
 
-The community project also uses GitLab for building its apps. Each
-app runs this tool upon build, ensuring the repositories are always up to
-date. Be sure to check some of the apps out as well to learn more about
-the whole setup.
+The community project runs the Repository Updater from GitHub Actions. When
+an app gets a release, or a new commit on edge, its repository sends an
+`update` event to the apps repositories, whose workflow runs this action for
+that one app. See the [shared workflows][workflows] for the whole setup.
 
 ## Why do this all
 
@@ -297,7 +327,7 @@ Nevertheless, there are some advantages using the alternative method:
   of concerns. Each app has its own issue list, releases, and all other
   GitHub goodness.
 - Release and versioning is based on GitHub Releases / Git tagging. Which
-  does not need updating of configuration files and is done with a single click.
+  does not need updating of configuration files and is done in one go.
 - Each app Git repository is downloadable and instantly buildable locally.
 - Every single piece of manual labor around maintaining an apps repository
   is fully automated. Building, testing, quality control, publishing, changelogs
@@ -308,7 +338,24 @@ Nevertheless, there are some advantages using the alternative method:
 
 ## Known issues and limitations
 
-- Any kind of testing and linting... is missing...
+- It only works with apps repositories and app repositories on GitHub.
+- A README template renders from a single file; `{% include %}` of other
+  files in the repository is not available.
+
+## Development
+
+This is a [uv][uv] project that also uses Node.js for Prettier, with
+[prek][prek] running the checks. Set up and run everything with:
+
+```bash
+npm install
+uv sync --group dev
+uv run prek run --all-files
+```
+
+`uv run pytest` runs just the tests. `--dry-run`, together with `--force`,
+shows what a run would change in a real apps repository without writing
+anything. [AGENTS.md](AGENTS.md) has more on how the code is laid out.
 
 ## Changelog & Releases
 
@@ -342,7 +389,7 @@ This is an active open-source project. We are always open to people who want to
 use the code or contribute to it.
 
 We have set up a separate document containing our
-[contribution guidelines](CONTRIBUTING.md).
+[contribution guidelines](.github/CONTRIBUTING.md).
 
 Thank you for being involved! :heart_eyes:
 
@@ -384,8 +431,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-[commits-shield]: https://img.shields.io/github/commit-activity/y/hassio-addons/repository-updater.svg
-[commits]: https://github.com/hassio-addons/repository-updater/commits/main
+[build-shield]: https://github.com/hassio-addons/repository-updater/actions/workflows/tests.yaml/badge.svg
+[build]: https://github.com/hassio-addons/repository-updater/actions/workflows/tests.yaml
+[codecov-shield]: https://codecov.io/gh/hassio-addons/repository-updater/branch/main/graph/badge.svg
+[codecov]: https://codecov.io/gh/hassio-addons/repository-updater
 [contributors]: https://github.com/hassio-addons/repository-updater/graphs/contributors
 [cosign]: https://docs.sigstore.dev/cosign/
 [discord-shield]: https://img.shields.io/discord/330944238910963714.svg
@@ -399,8 +448,14 @@ SOFTWARE.
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-production%20ready-brightgreen.svg
 [pypi-shield]: https://img.shields.io/pypi/v/repository-updater.svg
 [pypi]: https://pypi.org/project/repository-updater
+[python-versions-shield]: https://img.shields.io/pypi/pyversions/repository-updater
+[prek]: https://github.com/j178/prek
 [reddit]: https://reddit.com/r/homeassistant
 [releases]: https://github.com/hassio-addons/repository-updater/releases
 [repository]: https://github.com/hassio-addons/repository
+[scorecard-shield]: https://api.scorecard.dev/projects/github.com/hassio-addons/repository-updater/badge
+[scorecard]: https://scorecard.dev/viewer/?uri=github.com/hassio-addons/repository-updater
 [semver]: http://semver.org/spec/v2.0.0.html
-[token]: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
+[token]: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+[uv]: https://docs.astral.sh/uv/
+[workflows]: https://github.com/hassio-addons/workflows
