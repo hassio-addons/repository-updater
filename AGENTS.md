@@ -30,6 +30,7 @@ The apps repository declares its apps in `.apps.yml` (or the older
 | `  appconfig.py`         | Reading and writing app configuration files            |
 | `  render.py`            | READMEs, changelogs and commit messages                |
 | `  archive.py`           | Reading app files out of a repository tarball          |
+| `  cache.py`             | What a run remembers of an apps repository             |
 | `  output.py`            | Everything the terminal shows; nothing else prints     |
 | `  exceptions.py`        | The `RepositoryUpdaterError` hierarchy                 |
 | `  const.py`             | Channels and the file names that are looked up         |
@@ -96,6 +97,11 @@ See [AI_POLICY.md](AI_POLICY.md) for the contribution policy around AI tooling.
   versions. Only real version numbers can be one; a SHA never is.
 - The updater never clones. It reads files and tarballs through the API and
   commits through the Git Data API, one commit per app.
+- The cache holds what the apps repository has of each app, so a run for one
+  app skips loading the rest. An entry only counts when the blob SHA of the
+  app's configuration still matches the tree of the apps repository; after a
+  commit the updater works out the new SHA itself. A broken cache only makes a
+  run slower, never wrong. Bump `CACHE_VERSION` when what it holds changes.
 - `--dry-run` compares what would be committed with what is there, without
   writing. A forced dry run (`--force --dry-run`) against a real apps
   repository should show nothing but updates that are actually waiting.

@@ -39,19 +39,28 @@ The Repository Updater is a pretty simple, straightforward CLI tool.
  Bring a Home Assistant Apps repository up to date with its apps.
 
 ╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
-│ *  --token              TOKEN       GitHub access token. [env var: INPUT_TOKEN, GITHUB_TOKEN]    │
-│                                     [required]                                                   │
-│ *  --repository         OWNER/NAME  The Home Assistant Apps repository to update.                │
-│                                     [env var: INPUT_REPOSITORY, GITHUB_REPOSITORY]               │
-│                                     [required]                                                   │
-│    --app,--addon        APP         Update a single app. --addon is the deprecated name.         │
-│                                     [env var: INPUT_APP, INPUT_ADDON]                            │
-│    --force                          Update apps even when they look up to date.                  │
-│                                     [env var: INPUT_FORCE]                                       │
-│    --dry-run                        Show what would be committed, without committing.            │
-│                                     [env var: INPUT_DRY_RUN]                                     │
-│    --version                        Show the version and exit.                                   │
-│    --help                           Show this message and exit.                                  │
+│ *  --token                        TOKEN       GitHub access token.                               │
+│                                               [env var: INPUT_TOKEN, GITHUB_TOKEN]               │
+│                                               [required]                                         │
+│ *  --repository                   OWNER/NAME  The Home Assistant Apps repository to update.      │
+│                                               [env var: INPUT_REPOSITORY, GITHUB_REPOSITORY]     │
+│                                               [required]                                         │
+│    --app,--addon                  APP         Update a single app. --addon is the deprecated     │
+│                                               name.                                              │
+│                                               [env var: INPUT_APP, INPUT_ADDON]                  │
+│    --force                                    Update apps even when they look up to date.        │
+│                                               [env var: INPUT_FORCE]                             │
+│    --dry-run                                  Show what would be committed, without committing.  │
+│                                               [env var: INPUT_DRY_RUN]                           │
+│    --cache          --no-cache                Remember what the apps repository holds, to skip   │
+│                                               reloading it.                                      │
+│                                               [env var: INPUT_CACHE]                             │
+│                                               [default: cache]                                   │
+│    --cache-dir                    PATH        Where the cache lives. Defaults to                 │
+│                                               ~/.cache/repository-updater.                       │
+│                                               [env var: INPUT_CACHE_DIR]                         │
+│    --version                                  Show the version and exit.                         │
+│    --help                                     Show this message and exit.                        │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -61,6 +70,16 @@ option on the command line always beats the environment. `--addon` and the
 `INPUT_ADDON` variable are deprecated; use `--app` and `INPUT_APP` instead.
 
 To get a GitHub token, please see the GitHub article: [Create a token][token]
+
+### The cache
+
+A run for a single app still needs every other app, to render the README of
+the apps repository. The Repository Updater remembers what the apps repository
+holds of each app in a cache, so the next run only loads what changed. Every
+cached app is checked against the apps repository first: an app that changed
+since, even by hand, simply gets loaded again. The cache lives in
+`~/.cache/repository-updater` (or `$XDG_CACHE_HOME`); `--cache-dir` puts it
+elsewhere and `--no-cache` runs without it.
 
 ## Using Docker
 

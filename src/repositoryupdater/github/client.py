@@ -184,8 +184,8 @@ class GitHub:
             return None
         return body
 
-    async def tree(self, repository: str, ref: str) -> list[str]:
-        """Return the path of every file in a repository at a ref."""
+    async def tree(self, repository: str, ref: str) -> dict[str, str]:
+        """Return every file in a repository at a ref, with its blob SHA."""
         data = await self._request_json(
             _repo_url(repository, "git", "trees", ref).with_query(recursive=1)
         )
@@ -196,7 +196,11 @@ class GitHub:
             msg = f"{repository} has too many files to list at {ref}"
             raise GitHubResponseError(msg, status=HTTPStatus.OK)
 
-        return [entry["path"] for entry in data["tree"] if entry["type"] == "blob"]
+        return {
+            entry["path"]: entry["sha"]
+            for entry in data["tree"]
+            if entry["type"] == "blob"
+        }
 
     async def tarball(self, repository: str, ref: str) -> bytes:
         """Return a gzipped tarball of a repository at a ref."""

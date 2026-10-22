@@ -16,6 +16,7 @@ from repositoryupdater.exceptions import RepositoryUpdaterError
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+    from pathlib import Path
 
     from syrupy.assertion import SnapshotAssertion
 
@@ -26,6 +27,8 @@ ENVIRONMENT_VARIABLES = (
     "GITHUB_TOKEN",
     "INPUT_ADDON",
     "INPUT_APP",
+    "INPUT_CACHE",
+    "INPUT_CACHE_DIR",
     "INPUT_DRY_RUN",
     "INPUT_FORCE",
     "INPUT_REPOSITORY",
@@ -35,7 +38,7 @@ ENVIRONMENT_VARIABLES = (
 
 
 @pytest.fixture(autouse=True)
-def clean_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+def clean_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Keep the environment the tests run in out of the CLI options.
 
     GitHub Actions sets GITHUB_REPOSITORY and friends for every job, which
@@ -43,6 +46,9 @@ def clean_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     """
     for name in ENVIRONMENT_VARIABLES:
         monkeypatch.delenv(name, raising=False)
+
+    # Never anywhere near the cache of whoever runs the tests.
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
 
     # Rich renders the help to the terminal; pin it for the snapshot.
     monkeypatch.setenv("COLUMNS", "100")
@@ -106,6 +112,7 @@ def test_run(runner: CliRunner, github: MagicMock, updater: MagicMock) -> None:
         "app_filter": "example",
         "force": True,
         "dry_run": True,
+        "cache_path": options(updater)["cache_path"],
     }
     updater.return_value.run.assert_awaited_once_with()
 
@@ -255,3 +262,48 @@ def test_main_module_runs_the_cli() -> None:
         runpy.run_module("repositoryupdater", run_name="__main__")
 
     command.assert_called_once_with()
+
+
+@pytest.mark.usefixtures("github")
+def test_cache_by_default(
+    runner: CliRunner, updater: MagicMock, tmp_path: Path
+) -> None:
+    """Test the cache is on, in the user's cache directory, per apps repository."""
+    result = runner.invoke(cli.cli, ARGS)
+
+    assert result.exit_code == 0, result.output
+    assert options(updater)["cache_path"] == (
+        tmp_path / "repository-updater" / "hassio-addons__repository.json"
+    )
+
+
+@pytest.mark.usefixtures("github")
+def test_cache_dir(runner: CliRunner, updater: MagicMock, tmp_path: Path) -> None:
+    """Test the cache goes where it is told, from the option or the action."""
+    result = runner.invoke(
+        cli.cli, ARGS, env={"INPUT_CACHE_DIR": str(tmp_path / "elsewhere")}
+    )
+
+    assert result.exit_code == 0, result.output
+    assert options(updater)["cache_path"] == (
+        tmp_path / "elsewhere" / "hassio-addons__repository.json"
+    )
+
+
+@pytest.mark.parametrize(
+    ("args", "environment"),
+    [(["--no-cache"], {}), ([], {"INPUT_CACHE": "false"})],
+    ids=["option", "action input"],
+)
+@pytest.mark.usefixtures("github")
+def test_without_cache(
+    runner: CliRunner,
+    updater: MagicMock,
+    args: list[str],
+    environment: dict[str, str],
+) -> None:
+    """Test the cache can be switched off."""
+    result = runner.invoke(cli.cli, [*ARGS, *args], env=environment)
+
+    assert result.exit_code == 0, result.output
+    assert options(updater)["cache_path"] is None

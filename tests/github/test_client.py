@@ -261,11 +261,13 @@ async def test_tree(responses: aioresponses, github: GitHub) -> None:
     url = f"{REPOSITORY}/git/trees/master?recursive=1"
     mock(responses, "GET", url, "git_tree.json")
 
-    paths = await github.tree("hassio-addons/repository-edge", "master")
+    blobs = await github.tree("hassio-addons/repository-edge", "master")
 
-    assert "ssh/config.yaml" in paths
-    assert "actual-budget/translations/en.yaml" in paths
-    assert "ssh" not in paths
+    assert "actual-budget/translations/en.yaml" in blobs
+    assert "ssh" not in blobs
+    tree = orjson.loads(fixture_bytes("git_tree.json"))["tree"]
+    config = next(entry for entry in tree if entry["path"] == "ssh/config.yaml")
+    assert blobs["ssh/config.yaml"] == config["sha"]
 
 
 async def test_tree_truncated(responses: aioresponses, github: GitHub) -> None:

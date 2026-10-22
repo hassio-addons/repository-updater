@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from pathlib import Path  # noqa: TC003
 from typing import TYPE_CHECKING, Any
 
 from .appconfig import AppDetails, parse_config, render_config
 from .applist import AppEntry, AppList, ChangelogMode, Channel, parse_app_list
 from .archive import app_files
+from .cache import CachedApp, git_blob_sha, read_cache, write_cache
 from .const import (
     APP_LIST_FILENAMES,
     CONFIG_FILENAMES,
@@ -101,6 +103,9 @@ class App:
     # its current state was known, the README cannot show it this run.
     error: RepositoryUpdaterError | None = None
     current_known: bool = True
+    # The blob SHA of the app's configuration in the apps repository.
+    config_sha: str | None = None
+    from_cache: bool = False
 
     @property
     def target(self) -> str:
@@ -124,6 +129,25 @@ class App:
 
 
 @dataclass(kw_only=True)
+class Run:
+    """What one run works with, once the apps repository is known."""
+
+    repository: Repository
+    user: User
+    app_list: AppList
+    # Every file in the apps repository, with its blob SHA.
+    blobs: dict[str, str]
+    readme_template: bytes | None
+    apps: list[App] = field(default_factory=list)
+    # Apps that got their update in this run; the README shows those at
+    # their new version.
+    published: set[str] = field(default_factory=set)
+    # The README shows every app, so it stays as it is when one of them
+    # could not even be read; the next run catches it up.
+    readme: bool = True
+
+
+@dataclass(kw_only=True)
 class Updater:
     """Brings one apps repository up to date with the apps it lists."""
 
@@ -133,6 +157,8 @@ class Updater:
     app_filter: str | None = None
     force: bool = False
     dry_run: bool = False
+    # Where the cache of this apps repository lives; None runs without one.
+    cache_path: Path | None = None
 
     async def run(self) -> None:
         """Load everything, then commit the README and every app update."""
@@ -156,64 +182,94 @@ class Updater:
                 f'Only updating app "{self.output.plain(self.app_filter)}" this run!'
             )
 
-        apps = await self._load_apps(app_list)
-        self._report(apps, app_list.channel)
-
-        paths = set(
-            await self.github.tree(repository.full_name, repository.default_branch)
+        run = Run(
+            repository=repository,
+            user=user,
+            app_list=app_list,
+            blobs=await self.github.tree(
+                repository.full_name, repository.default_branch
+            ),
+            readme_template=await self.github.file(
+                repository.full_name, README_TEMPLATE
+            ),
         )
-        readme_template = await self.github.file(repository.full_name, README_TEMPLATE)
+        cached = read_cache(self.cache_path) if self.cache_path else {}
+        run.apps = await self._load_apps(run, cached)
+        self._report(run.apps, app_list.channel)
 
-        # The README shows every app, so it stays as it is when one of them
-        # could not even be read; the next run catches it up.
-        readme = all(app.current_known for app in apps)
-        if not readme:
+        run.readme = all(app.current_known for app in run.apps)
+        if not run.readme:
             self.output.warning(
                 "The README of the apps repository stays as it is this run: "
                 "not every app could be read."
             )
 
-        # Apps that got their update in this run; the README shows those at
-        # their new version.
-        published: set[str] = set()
-
-        def readme_files() -> Files:
-            if not readme:
-                return {}
-            return self._readme(
-                repository, app_list.channel, apps, published, readme_template
-            )
-
         self.output.divider()
-        await self._commit(repository, user, README_COMMIT_MESSAGE, readme_files())
+        await self._commit(run, README_COMMIT_MESSAGE, self._readme(run))
 
-        for app in apps:
+        for app in run.apps:
             latest = app.update_to(force=self.force)
-            if latest is None:
-                continue
-
-            self.output.section(f"Updating app {self.output.plain(app.target)}")
-            try:
-                files = await self._app_files(app, latest, app_list, paths)
-
-                published.add(app.target)
-                files |= readme_files()
-
-                message = commit_message(
-                    latest.details.name, latest.version, forced=self.force
-                )
-                await self._commit(repository, user, message, files)
-            except STOP_THE_RUN:
-                raise
-            except RepositoryUpdaterError as error:
-                # Nothing of this app got committed; the README keeps it at
-                # the version it has.
-                published.discard(app.target)
-                app.error = error
-                self.output.error(str(error))
+            if latest is not None:
+                await self._publish(run, app, latest)
 
         self.output.end_section()
-        self._raise_failures(apps)
+        self._save_cache(run.apps)
+        self._raise_failures(run.apps)
+
+    async def _publish(self, run: Run, app: App, latest: LatestState) -> None:
+        """Commit the update of one app; when it fails, the app keeps its error."""
+        self.output.section(f"Updating app {self.output.plain(app.target)}")
+        try:
+            files = await self._app_files(app, latest, run)
+
+            run.published.add(app.target)
+            files |= self._readme(run)
+
+            message = commit_message(
+                latest.details.name, latest.version, forced=self.force
+            )
+            committed = await self._commit(run, message, files)
+        except STOP_THE_RUN:
+            raise
+        except RepositoryUpdaterError as error:
+            # Nothing of this app got committed; the README keeps it at the
+            # version it has.
+            run.published.discard(app.target)
+            app.error = error
+            self.output.error(str(error))
+            return
+
+        if committed:
+            # The apps repository holds the new version now; the cache
+            # remembers it with the configuration just written.
+            config = files[f"{app.target}/{latest.config_filename}"]
+            app.current = latest
+            app.config_sha = git_blob_sha(config) if config is not None else None
+
+    def _save_cache(self, apps: list[App]) -> None:
+        """Remember what the apps repository holds of every app it could read."""
+        if self.cache_path is None:
+            return
+
+        entries = {
+            app.target: CachedApp(
+                source=app.entry.repository,
+                config_filename=app.current.config_filename,
+                config_sha=app.config_sha,
+                repository=app.current.repository,
+                version=app.current.version.version,
+                commit=app.current.version.commit,
+                details=app.current.details,
+            )
+            for app in apps
+            if app.current is not None and app.config_sha is not None
+        }
+        try:
+            write_cache(self.cache_path, entries)
+        except OSError as error:
+            self.output.warning(
+                f"Could not write the cache: {self.output.plain(error)}"
+            )
 
     def _raise_failures(self, apps: list[App]) -> None:
         """Report every app that failed, and fail the run when there are any."""
@@ -247,34 +303,45 @@ class Updater:
         self.output.failed()
         raise RepositoryAppListNotFoundError(APP_LIST_FILENAMES)
 
-    async def _load_apps(self, app_list: AppList) -> list[App]:
+    async def _load_apps(self, run: Run, cached: dict[str, CachedApp]) -> list[App]:
         """Load every app in the list, a handful at a time."""
-        self.output.info(f"Loading {len(app_list.apps)} apps")
+        entries = run.app_list.apps
+        self.output.info(f"Loading {len(entries)} apps")
         limit = asyncio.Semaphore(PARALLEL_LOADS)
 
         async def load(entry: AppEntry) -> App:
             async with limit:
-                return await self._load_app(app_list.channel, entry)
+                return await self._load_app(
+                    run, entry, cached.get(entry.repository_target)
+                )
 
         try:
             async with asyncio.TaskGroup() as group:
-                tasks = [group.create_task(load(entry)) for entry in app_list.apps]
+                tasks = [group.create_task(load(entry)) for entry in entries]
         except* RepositoryUpdaterError as errors:
-            # The first app that failed stops the run; the rest got cancelled.
+            # Only errors that hit every app get here; the rest got cancelled.
             raise errors.exceptions[0] from None
 
-        return [task.result() for task in tasks]
+        apps = [task.result() for task in tasks]
+        from_cache = sum(app.from_cache for app in apps)
+        if from_cache:
+            self.output.info(f"{from_cache} of them from the cache")
+        return apps
 
-    async def _load_app(self, channel: Channel, entry: AppEntry) -> App:
+    async def _load_app(
+        self, run: Run, entry: AppEntry, cached: CachedApp | None
+    ) -> App:
         """Load what the apps repository holds of an app, and what is out.
 
         An app that fails keeps its error, so the other apps carry on.
         """
         app = App(entry=entry, updating=self._is_selected(entry))
         try:
-            repository = await self.github.repository(entry.repository)
-            app.repository = repository
-            await self._load_current(app, repository)
+            repository = self._from_cache(app, run.blobs, cached)
+            if repository is None:
+                repository = await self.github.repository(entry.repository)
+                app.repository = repository
+                await self._load_current(app, repository, run.blobs)
         except STOP_THE_RUN:
             raise
         except RepositoryUpdaterError as error:
@@ -284,7 +351,7 @@ class Updater:
 
         if app.updating:
             try:
-                await self._load_latest(app, repository, channel)
+                await self._load_latest(app, repository, run.app_list.channel)
             except STOP_THE_RUN:
                 raise
             except RepositoryUpdaterError as error:
@@ -292,28 +359,69 @@ class Updater:
 
         return app
 
-    async def _load_current(self, app: App, repository: Repository) -> None:
+    @staticmethod
+    def _config_filename(target: str, blobs: Mapping[str, str]) -> str | None:
+        """Return the configuration file an app has in the apps repository."""
+        return next(
+            (name for name in CONFIG_FILENAMES if f"{target}/{name}" in blobs), None
+        )
+
+    def _from_cache(
+        self, app: App, blobs: Mapping[str, str], cached: CachedApp | None
+    ) -> Repository | None:
+        """Take what the cache has of an app, if it still matches the repository.
+
+        Returns the app's own repository when the cache was used.
+        """
+        if cached is None or cached.source != app.entry.repository:
+            return None
+
+        filename = self._config_filename(app.target, blobs)
+        if filename != cached.config_filename:
+            return None
+
+        if blobs[f"{app.target}/{filename}"] != cached.config_sha:
+            return None
+
+        app.repository = cached.repository
+        app.config_sha = cached.config_sha
+        app.from_cache = True
+        app.current = AppState(
+            version=AppVersion(version=cached.version, commit=cached.commit),
+            details=cached.details,
+            config_filename=filename,
+            repository=cached.repository,
+        )
+        return cached.repository
+
+    async def _load_current(
+        self, app: App, repository: Repository, blobs: Mapping[str, str]
+    ) -> None:
         """Load the version of an app the apps repository holds now."""
-        for filename in CONFIG_FILENAMES:
-            path = f"{app.target}/{filename}"
-            content = await self.github.file(self.repository_name, path)
-            if content is None:
-                continue
-
-            location = f"{self.repository_name}/{path}"
-            config = parse_config(location, content)
-            if "version" not in config:
-                raise InvalidAppConfigError(location, 'it is missing "version"')
-
-            app.current = AppState(
-                version=await self._find_version(
-                    app.entry.repository, str(config["version"])
-                ),
-                details=AppDetails.from_config(location, config),
-                config_filename=filename,
-                repository=repository,
-            )
+        filename = self._config_filename(app.target, blobs)
+        if filename is None:
             return
+
+        path = f"{app.target}/{filename}"
+        location = f"{self.repository_name}/{path}"
+        content = await self.github.file(self.repository_name, path)
+        if content is None:
+            # Gone since the listing; not knowing beats dropping the app.
+            raise AppConfigNotFoundError(location)
+
+        config = parse_config(location, content)
+        if "version" not in config:
+            raise InvalidAppConfigError(location, 'it is missing "version"')
+
+        app.config_sha = blobs[path]
+        app.current = AppState(
+            version=await self._find_version(
+                app.entry.repository, str(config["version"])
+            ),
+            details=AppDetails.from_config(location, config),
+            config_filename=filename,
+            repository=repository,
+        )
 
     async def _find_version(self, repository: str, version: str) -> AppVersion:
         """Find the commit behind a version an apps repository holds."""
@@ -437,24 +545,18 @@ class Updater:
             repository=state.repository,
         )
 
-    def _readme(
-        self,
-        repository: Repository,
-        channel: Channel,
-        apps: list[App],
-        published: set[str],
-        template: bytes | None,
-    ) -> Files:
-        """Return the README of the apps repository, if it has a template."""
-        if template is None:
+    def _readme(self, run: Run) -> Files:
+        """Return the README of the apps repository, if it gets one this run."""
+        if run.readme_template is None or not run.readme:
             return {}
 
+        channel = run.app_list.channel
         states = [
-            (app, app.latest if app.target in published else app.current)
-            for app in apps
+            (app, app.latest if app.target in run.published else app.current)
+            for app in run.apps
         ]
         data = repository_template_data(
-            repository=repository,
+            repository=run.repository,
             channel=channel,
             apps=[
                 self._template_data(app, state, channel)
@@ -462,13 +564,14 @@ class Updater:
                 if state is not None
             ],
         )
-        return {"README.md": render_template(template.decode(), data).encode()}
+        return {
+            "README.md": render_template(run.readme_template.decode(), data).encode()
+        }
 
-    async def _app_files(
-        self, app: App, latest: LatestState, app_list: AppList, paths: set[str]
-    ) -> Files:
+    async def _app_files(self, app: App, latest: LatestState, run: Run) -> Files:
         """Return every file an update of an app writes, or deletes."""
         filename = latest.config_filename
+        paths = run.blobs
 
         self.output.step("Downloading app source")
         tarball = await self.github.tarball(
@@ -515,10 +618,10 @@ class Updater:
         if README_TEMPLATE in source:
             files[f"{app.target}/README.md"] = render_template(
                 source[README_TEMPLATE].decode(),
-                self._template_data(app, latest, app_list.channel),
+                self._template_data(app, latest, run.app_list.channel),
             ).encode()
 
-        changelog = await self._changelog(app, latest, app_list.changelog)
+        changelog = await self._changelog(app, latest, run.app_list.changelog)
         files[f"{app.target}/CHANGELOG.md"] = changelog.encode()
         return files
 
@@ -551,34 +654,37 @@ class Updater:
         )
         return render_changelog(version, since=latest.release, commits=commits)
 
-    async def _commit(
-        self, repository: Repository, user: User, message: str, files: Files
-    ) -> None:
-        """Commit files to the apps repository; in a dry run, show the diff."""
+    async def _commit(self, run: Run, message: str, files: Files) -> bool:
+        """Commit files to the apps repository; in a dry run, show the diff.
+
+        Returns whether the apps repository holds these files now, which a
+        dry run never makes so.
+        """
         self.output.step(f"Committing {self.output.plain(message)}")
 
         if self.dry_run:
-            changed = await self._changed_paths(repository, files)
+            changed = await self._changed_paths(run.repository, files)
             if not changed:
                 self.output.skipped("Skipped, no changes.")
-                return
+                return False
 
             self.output.done("Would commit (dry run):")
             for path, change in sorted(changed.items()):
                 self.output.info(f"  {change}: {self.output.plain(path)}")
-            return
+            return False
 
         commit = await self.github.commit_files(
-            repository.full_name,
-            branch=repository.default_branch,
+            run.repository.full_name,
+            branch=run.repository.default_branch,
             message=message,
             files=files,
-            author=user,
+            author=run.user,
         )
         if commit is None:
             self.output.skipped("Skipped, no changes.")
         else:
             self.output.done(f"Done: {commit.sha[:7]}")
+        return True
 
     async def _changed_paths(
         self, repository: Repository, files: Mapping[str, bytes | None]
