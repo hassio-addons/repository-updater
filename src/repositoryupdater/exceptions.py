@@ -28,6 +28,14 @@ class RepositoryAppListNotFoundError(RepositoryUpdaterError):
         )
 
 
+class InvalidAppListError(RepositoryUpdaterError):
+    """Raised when the repository app list exists but cannot be used."""
+
+    def __init__(self, filename: str, problem: str) -> None:
+        """Initialize with the file and what is wrong with it."""
+        super().__init__(f"Repository app list {filename} is unusable: {problem}")
+
+
 class InvalidChannelError(RepositoryUpdaterError):
     """Raised when the apps repository declares an unknown release channel."""
 
@@ -42,6 +50,14 @@ class AppConfigNotFoundError(RepositoryUpdaterError):
     def __init__(self, location: str) -> None:
         """Initialize with the location that was searched."""
         super().__init__(f"Could not find an app configuration file in {location}")
+
+
+class InvalidAppConfigError(RepositoryUpdaterError):
+    """Raised when an app configuration file exists but cannot be used."""
+
+    def __init__(self, location: str, problem: str) -> None:
+        """Initialize with the file and what is wrong with it."""
+        super().__init__(f"App configuration {location} is unusable: {problem}")
 
 
 class AppReleaseNotFoundError(RepositoryUpdaterError):

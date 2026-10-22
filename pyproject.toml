@@ -37,6 +37,8 @@ classifiers = [
 # exact versions CI and the container use live in uv.lock.
 dependencies = [
   "aiohttp>=3.14.5,<4",
+  # Versioned by date, so a major bump is just a new year: no upper bound.
+  "awesomeversion>=25.8.0",
   "click>=8.5.0,<9",
   "emoji>=2.16.0,<3",
   "GitPython>=3.2.1,<4",

@@ -1,0 +1,251 @@
+---
+channel: beta
+apps:
+  actual-budget:
+    repository: hassio-addons/app-actual-budget
+    target: actual-budget
+    image: ghcr.io/hassio-addons/actual-budget
+  adguard:
+    repository: hassio-addons/app-adguard-home
+    target: adguard
+    image: ghcr.io/hassio-addons/adguard
+  aircast:
+    repository: hassio-addons/app-aircast
+    target: aircast
+    image: ghcr.io/hassio-addons/aircast
+  airsonos:
+    repository: hassio-addons/app-airsonos
+    target: airsonos
+    image: ghcr.io/hassio-addons/airsonos
+  appdaemon:
+    repository: hassio-addons/app-appdaemon
+    target: appdaemon
+    image: ghcr.io/hassio-addons/appdaemon
+  audiobookshelf:
+    repository: hassio-addons/app-audiobookshelf
+    target: audiobookshelf
+    image: ghcr.io/hassio-addons/audiobookshelf
+  bazarr:
+    repository: hassio-addons/app-bazarr
+    target: bazarr
+    image: ghcr.io/hassio-addons/bazarr
+  bitwarden:
+    repository: hassio-addons/app-vaultwarden
+    target: vaultwarden
+    image: ghcr.io/hassio-addons/bitwarden
+  bookstack:
+    repository: hassio-addons/app-bookstack
+    target: bookstack
+    image: ghcr.io/hassio-addons/bookstack
+  calibre-web:
+    repository: hassio-addons/app-calibre-web
+    target: calibre-web
+    image: ghcr.io/hassio-addons/calibre-web
+  chrony:
+    repository: hassio-addons/app-chrony
+    target: chrony
+    image: ghcr.io/hassio-addons/chrony
+  emqx:
+    repository: hassio-addons/app-emqx
+    target: emqx
+    image: ghcr.io/hassio-addons/emqx
+  example:
+    repository: hassio-addons/app-example
+    target: example
+    image: ghcr.io/hassio-addons/example
+  file-explorer:
+    repository: hassio-addons/app-file-explorer
+    target: file-explorer
+    image: ghcr.io/hassio-addons/file-explorer
+  foldingathome:
+    repository: hassio-addons/app-foldingathome
+    target: foldingathome
+    image: ghcr.io/hassio-addons/foldingathome
+  freshrss:
+    repository: hassio-addons/app-freshrss
+    target: freshrss
+    image: ghcr.io/hassio-addons/freshrss
+  ftp:
+    repository: hassio-addons/app-ftp
+    target: ftp
+    image: ghcr.io/hassio-addons/ftp
+  glances:
+    repository: hassio-addons/app-glances
+    target: glances
+    image: ghcr.io/hassio-addons/glances
+  grafana:
+    repository: hassio-addons/app-grafana
+    target: grafana
+    image: ghcr.io/hassio-addons/grafana
+  grocy:
+    repository: hassio-addons/app-grocy
+    target: grocy
+    image: ghcr.io/hassio-addons/grocy
+  homebox:
+    repository: hassio-addons/app-homebox
+    target: homebox
+    image: ghcr.io/hassio-addons/homebox
+  influxdb:
+    repository: hassio-addons/app-influxdb
+    target: influxdb
+    image: ghcr.io/hassio-addons/influxdb
+  jellyfin:
+    repository: hassio-addons/app-jellyfin
+    target: jellyfin
+    image: ghcr.io/hassio-addons/jellyfin
+  jupyterlab:
+    repository: hassio-addons/app-jupyterlab
+    target: jupyterlab
+    image: ghcr.io/hassio-addons/jupyterlab
+  lidarr:
+    repository: hassio-addons/app-lidarr
+    target: lidarr
+    image: ghcr.io/hassio-addons/lidarr
+  mealie:
+    repository: hassio-addons/app-mealie
+    target: mealie
+    image: ghcr.io/hassio-addons/mealie
+  motioneye:
+    repository: hassio-addons/app-motioneye
+    target: motioneye
+    image: ghcr.io/hassio-addons/motioneye
+  mqtt-explorer:
+    repository: hassio-addons/app-mqtt-explorer
+    target: mqtt-explorer
+    image: ghcr.io/hassio-addons/mqtt-explorer
+  mqtt-io:
+    repository: hassio-addons/app-mqtt-io
+    target: mqtt-io
+    image: ghcr.io/hassio-addons/mqtt-io
+  n8n:
+    repository: hassio-addons/app-n8n
+    target: n8n
+    image: ghcr.io/hassio-addons/n8n
+  node-red:
+    repository: hassio-addons/app-node-red
+    target: node-red
+    image: ghcr.io/hassio-addons/node-red
+  nginxproxymanager:
+    repository: hassio-addons/app-nginx-proxy-manager
+    target: proxy-manager
+    image: ghcr.io/hassio-addons/nginxproxymanager
+  nut:
+    repository: hassio-addons/app-nut
+    target: nut
+    image: ghcr.io/hassio-addons/nut
+  nzbget:
+    repository: hassio-addons/app-nzbget
+    target: nzbget
+    image: ghcr.io/hassio-addons/nzbget
+  overseerr:
+    repository: hassio-addons/app-seerr
+    target: seerr
+    image: ghcr.io/hassio-addons/overseerr
+  phpmyadmin:
+    repository: hassio-addons/app-phpmyadmin
+    target: phpmyadmin
+    image: ghcr.io/hassio-addons/phpmyadmin
+  plex:
+    repository: hassio-addons/app-plex
+    target: plex
+    image: ghcr.io/hassio-addons/plex
+  qbittorrent:
+    repository: hassio-addons/app-qbittorrent
+    target: qbittorrent
+    image: ghcr.io/hassio-addons/qbittorrent
+  radarr:
+    repository: hassio-addons/app-radarr
+    target: radarr
+    image: ghcr.io/hassio-addons/radarr
+  sonarr:
+    repository: hassio-addons/app-sonarr
+    target: sonarr
+    image: ghcr.io/hassio-addons/sonarr
+  spotify:
+    repository: hassio-addons/app-spotify-connect
+    target: spotify
+    image: ghcr.io/hassio-addons/spotify
+  spotweb:
+    repository: hassio-addons/app-spotweb
+    target: spotweb
+    image: ghcr.io/hassio-addons/spotweb
+  prowlarr:
+    repository: hassio-addons/app-prowlarr
+    target: prowlarr
+    image: ghcr.io/hassio-addons/prowlarr
+  syncthing:
+    repository: hassio-addons/app-syncthing
+    target: syncthing
+    image: ghcr.io/hassio-addons/syncthing
+  tailscale:
+    repository: hassio-addons/app-tailscale
+    target: tailscale
+    image: ghcr.io/hassio-addons/tailscale
+  tasmoadmin:
+    repository: hassio-addons/app-tasmoadmin
+    target: tasmoadmin
+    image: ghcr.io/hassio-addons/tasmoadmin
+  tautulli:
+    repository: hassio-addons/app-tautulli
+    target: tautulli
+    image: ghcr.io/hassio-addons/tautulli
+  thelounge:
+    repository: hassio-addons/app-thelounge
+    target: thelounge
+    image: ghcr.io/hassio-addons/thelounge
+  sabnzbd:
+    repository: hassio-addons/app-sabnzbd
+    target: sabnzbd
+    image: ghcr.io/hassio-addons/sabnzbd
+  ssh:
+    repository: hassio-addons/app-ssh
+    target: ssh
+    image: ghcr.io/hassio-addons/ssh
+  sqlite-web:
+    repository: hassio-addons/app-sqlite-web
+    target: sqlite-web
+    image: ghcr.io/hassio-addons/sqlite-web
+  stirling-pdf:
+    repository: hassio-addons/app-stirling-pdf
+    target: stirling-pdf
+    image: ghcr.io/hassio-addons/stirling-pdf
+  tor:
+    repository: hassio-addons/app-tor
+    target: tor
+    image: ghcr.io/hassio-addons/tor
+  traccar:
+    repository: hassio-addons/app-traccar
+    target: traccar
+    image: ghcr.io/hassio-addons/traccar
+  unifi:
+    repository: hassio-addons/app-unifi
+    target: unifi
+    image: ghcr.io/hassio-addons/unifi
+  uptime-kuma:
+    repository: hassio-addons/app-uptime-kuma
+    target: uptime-kuma
+    image: ghcr.io/hassio-addons/uptime-kuma
+  victoriametrics:
+    repository: hassio-addons/app-victoriametrics
+    target: victoriametrics
+    image: ghcr.io/hassio-addons/victoriametrics
+  vscode:
+    repository: hassio-addons/app-vscode
+    target: vscode
+    image: ghcr.io/hassio-addons/vscode
+  whisparr:
+    repository: hassio-addons/app-whisparr
+    target: whisparr
+    image: ghcr.io/hassio-addons/whisparr
+  wireguard:
+    repository: hassio-addons/app-wireguard
+    target: wireguard
+    image: ghcr.io/hassio-addons/wireguard
+  zerotier:
+    repository: hassio-addons/app-zerotier
+    target: zerotier
+    image: ghcr.io/hassio-addons/zerotier
+  zwave-js-ui:
+    repository: hassio-addons/app-zwave-js-ui
+    target: zwave-js-ui
+    image: ghcr.io/hassio-addons/zwave-js-ui
