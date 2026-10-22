@@ -18,6 +18,7 @@ from rich.console import Console
 
 from repositoryupdater.cache import git_blob_sha, read_cache
 from repositoryupdater.exceptions import (
+    AppNotFoundError,
     AppsFailedError,
     RepositoryAppListNotFoundError,
 )
@@ -25,6 +26,7 @@ from repositoryupdater.github import (
     Commit,
     GitHub,
     GitHubAuthenticationError,
+    GitHubConflictError,
     GitHubNotFoundError,
     Release,
     Repository,
@@ -97,6 +99,8 @@ class FakeRepository:
     snapshots: dict[str, dict[str, bytes]] = field(default_factory=dict)
     compares: dict[tuple[str, str], list[Commit]] = field(default_factory=dict)
     branch: str = "main"
+    # The commit the branch points at; every commit moves it along.
+    branch_sha: str = "0" * 40
 
     @property
     def info(self) -> Repository:
@@ -183,10 +187,16 @@ class FakeGitHub(GitHub):
         """Return the commits between two refs."""
         return self._get(repository).compares[(base, head)]
 
-    async def tree(self, repository: str, ref: str) -> dict[str, str]:
-        """Return every file on the branch, with its blob SHA."""
+    async def branch_head(self, repository: str, branch: str) -> str:
+        """Return the commit the branch points at."""
         fake = self._get(repository)
-        assert ref == fake.branch
+        assert branch == fake.branch
+        return fake.branch_sha
+
+    async def tree(self, repository: str, ref: str) -> dict[str, str]:
+        """Return every file at the head of the branch, with its blob SHA."""
+        fake = self._get(repository)
+        assert ref == fake.branch_sha
         return {path: git_blob_sha(content) for path, content in fake.files.items()}
 
     async def tarball(self, repository: str, ref: str) -> bytes:
@@ -202,6 +212,7 @@ class FakeGitHub(GitHub):
                 archive.addfile(member, io.BytesIO(content))
         return buffer.getvalue()
 
+    # pylint: disable-next=too-many-arguments
     async def commit_files(
         self,
         repository: str,
@@ -210,11 +221,15 @@ class FakeGitHub(GitHub):
         message: str,
         files: Mapping[str, bytes | None],
         author: User,
+        expected_head: str | None = None,
     ) -> Commit | None:
         """Apply the files to the branch, the way the Git Data API would."""
         fake = self._get(repository)
         assert branch == fake.branch
         assert author.login == "octocat"
+        if expected_head is not None and expected_head != fake.branch_sha:
+            msg = f"{repository} moved"
+            raise GitHubConflictError(msg, status=409)
 
         changed = {
             path: content
@@ -231,7 +246,8 @@ class FakeGitHub(GitHub):
                 fake.files[path] = content
 
         self.commits.append(Committed(message=message, files=dict(files)))
-        return commit(f"{len(self.commits):040d}", message)
+        fake.branch_sha = f"{len(self.commits):040d}"
+        return commit(fake.branch_sha, message)
 
 
 @pytest.fixture
@@ -609,15 +625,25 @@ async def test_invalid_app_list(
     assert not github.commits
 
 
-async def test_current_version_unknown(
+async def test_lost_version_still_gets_updated(
     apps_repository: FakeRepository, app_repository: FakeRepository
 ) -> None:
-    """Test a version the app repository does not know fails clearly."""
+    """Test an app whose version its repository no longer knows can move on.
+
+    Like an edge commit that got force-pushed away. The README waits until
+    the app has a version it can show, then catches up in the same run.
+    """
     apps_repository.files["example/config.yaml"] = app_config("0.0.1")
+    github = FakeGitHub(apps_repository, app_repository)
 
-    output = await failing_run(updater(FakeGitHub(apps_repository, app_repository)))
+    output = await run_output(updater(github))
 
-    assert "has no tag or commit for version 0.0.1" in output
+    published = only_commit(github)
+    assert published.message == ":tada: Release of app Example 1.1.0"
+    assert apps_repository.files["README.md"] == (
+        b"# hassio-addons/repository\n- Example v1.1.0\n"
+    )
+    assert "0.0.1 (not found in its repository)" in output
 
 
 async def test_current_config_without_version(
@@ -705,7 +731,9 @@ async def test_unreadable_app_leaves_the_readme_alone(
     Rendering it without that app would drop the app from the README.
     """
     other = add_other_app(apps_repository)
-    apps_repository.files["example/config.yaml"] = app_config("0.0.1")
+    config = yaml.safe_load(app_config())
+    del config["version"]
+    apps_repository.files["example/config.yaml"] = yaml.dump(config).encode()
     before = apps_repository.files["README.md"]
     github = FakeGitHub(apps_repository, app_repository, other)
 
@@ -911,7 +939,9 @@ async def test_failed_app_stays_out_of_the_cache(
 ) -> None:
     """Test an app that could not be read leaves no entry behind."""
     cache = tmp_path / "cache.json"
-    apps_repository.files["example/config.yaml"] = app_config("0.0.1")
+    config = yaml.safe_load(app_config())
+    del config["version"]
+    apps_repository.files["example/config.yaml"] = yaml.dump(config).encode()
 
     await failing_run(
         updater(FakeGitHub(apps_repository, app_repository), cache_path=cache)
@@ -943,3 +973,69 @@ async def test_config_gone_since_the_listing(
 
     assert apps_repository.files["README.md"] == before
     assert "Could not find an app configuration file" in output
+
+
+async def test_unknown_app_filter(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test asking for an app the app list does not have fails right away."""
+    github = FakeGitHub(apps_repository, app_repository)
+
+    with pytest.raises(AppNotFoundError, match='"missing-app"'):
+        await updater(github, app_filter="missing-app").run()
+
+    assert not github.commits
+
+
+class MovingBranch(FakeGitHub):
+    """A GitHub where someone else commits right after the run loaded."""
+
+    async def tree(self, repository: str, ref: str) -> dict[str, str]:
+        """List the files, then let someone else move the branch."""
+        blobs = await super().tree(repository, ref)
+        self._get(repository).branch_sha = "f" * 40
+        return blobs
+
+
+async def test_branch_moved_during_the_run(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test a branch that moved under the run stops it, instead of undoing work.
+
+    What the run would commit was worked out from the old state; on top of
+    the new one, it could revert what the other commit did.
+    """
+    github = MovingBranch(apps_repository, app_repository)
+
+    with pytest.raises(GitHubConflictError, match="moved"):
+        await updater(github).run()
+
+    assert not github.commits
+
+
+async def test_broken_app_template_does_not_stop_the_others(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test a README template that does not render fails only its own app."""
+    other = add_other_app(apps_repository)
+    app_repository.snapshots["2" * 40]["example/.README.j2"] = b"{% broken %}"
+    github = FakeGitHub(apps_repository, app_repository, other)
+
+    output = await failing_run(updater(github))
+
+    assert only_commit(github).message == ":tada: Release of app Other 2.1.0"
+    assert "app-example/example/.README.j2 cannot be rendered" in output
+
+
+async def test_app_template_cannot_reach_the_process(
+    apps_repository: FakeRepository, app_repository: FakeRepository
+) -> None:
+    """Test a template from an app repository cannot read the environment."""
+    app_repository.snapshots["2" * 40]["example/.README.j2"] = (
+        b"{{ cycler.__init__.__globals__.os.environ }}"
+    )
+
+    output = await failing_run(updater(FakeGitHub(apps_repository, app_repository)))
+
+    assert "unsafe" in output
+    assert "example/README.md" not in apps_repository.files

@@ -10,6 +10,7 @@ import pytest
 
 from repositoryupdater.appconfig import AppDetails, parse_config
 from repositoryupdater.applist import AppEntry, Channel
+from repositoryupdater.exceptions import InvalidTemplateError
 from repositoryupdater.github import Commit, Release, Repository
 from repositoryupdater.render import (
     README_COMMIT_MESSAGE,
@@ -106,7 +107,9 @@ def test_render_real_app_readme(channel: Channel, snapshot: SnapshotAssertion) -
     """Test the real README template of the SSH app renders for each channel."""
     template = load_fixture("repositories/app-ssh.README.j2").decode()
 
-    readme = render_template(template, ssh_data(channel, released()))
+    readme = render_template(
+        template, ssh_data(channel, released()), location="template"
+    )
 
     assert readme == snapshot
 
@@ -136,7 +139,7 @@ def test_render_real_repository_readme(snapshot: SnapshotAssertion) -> None:
         apps=[ssh_data(Channel.STABLE, released())],
     )
 
-    readme = render_template(template, data)
+    readme = render_template(template, data, location="template")
 
     assert readme == snapshot
     assert "Advanced SSH & Web Terminal" in readme
@@ -290,3 +293,18 @@ def test_prepend_ignores_numbered_headings() -> None:
     assert changelog == (
         "## 1.1.0\n\n- Faster\n\n## 1.0.0\n\n## 2. Known limitations\n\n- Slow\n"
     )
+
+
+@pytest.mark.parametrize(
+    ("template", "problem"),
+    [
+        (b"\xff\xfe", "not UTF-8 text"),
+        ("{% broken %}", "broken"),
+        ("{{ cycler.__init__.__globals__.os.environ }}", "unsafe"),
+    ],
+    ids=["not text", "syntax", "escaping the sandbox"],
+)
+def test_template_errors(template: str | bytes, problem: str) -> None:
+    """Test a template that cannot render says which one and why."""
+    with pytest.raises(InvalidTemplateError, match=f"app/.README.j2 .*{problem}"):
+        render_template(template, {}, location="app/.README.j2")

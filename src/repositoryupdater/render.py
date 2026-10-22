@@ -6,7 +6,10 @@ import re
 from typing import TYPE_CHECKING, Any
 
 import emoji
-from jinja2 import BaseLoader, Environment
+from jinja2 import BaseLoader, TemplateError
+from jinja2.sandbox import SandboxedEnvironment
+
+from .exceptions import InvalidTemplateError
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -23,15 +26,29 @@ README_COMMIT_MESSAGE = ":books: Updated README"
 VERSION_HEADING = re.compile(r"^## v?\d+\.\d+", re.MULTILINE)
 
 
-def render_template(template: str, data: Mapping[str, Any]) -> str:
-    """Render a README template."""
+def render_template(
+    template: str | bytes, data: Mapping[str, Any], *, location: str
+) -> str:
+    """Render a README template.
+
+    Templates come from the repositories of the apps, so they render in a
+    sandbox: a template gets the data it is given, and nothing of the
+    process running it, like its environment or the token in there.
+    """
     # Autoescaping is off on purpose: these templates render Markdown.
-    environment = Environment(  # noqa: S701
+    environment = SandboxedEnvironment(
         loader=BaseLoader(),
         trim_blocks=True,
         extensions=["jinja2.ext.loopcontrols"],
     )
-    return environment.from_string(template).render(**data)
+    try:
+        text = template.decode() if isinstance(template, bytes) else template
+        return environment.from_string(text).render(**data)
+    except UnicodeDecodeError as exception:
+        msg = "it is not UTF-8 text"
+        raise InvalidTemplateError(location, msg) from exception
+    except TemplateError as exception:
+        raise InvalidTemplateError(location, str(exception)) from exception
 
 
 def app_template_data(
@@ -60,7 +77,10 @@ def app_template_data(
         "images": {arch: entry.image.replace("{arch}", arch) for arch in details.archs},
         "version": version.display,
         "commit": version.commit.sha,
-        "date": version.release.created_at if version.release else version.commit.date,
+        # The commit date, not the release date: a version read back from
+        # the apps repository does not know its release, and the README
+        # should not change between runs because of that.
+        "date": version.commit.date,
     }
 
 

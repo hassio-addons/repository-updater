@@ -124,14 +124,24 @@ class Output:
     @staticmethod
     def plain(value: object) -> str:
         """Return a value to use as is inside a message."""
-        return escape(str(value))
+        return _outside_value(value)
 
     @staticmethod
     def highlight(value: object) -> str:
         """Return a value styled for use inside a message."""
-        return f"[magenta]{escape(str(value))}[/]"
+        return f"[magenta]{_outside_value(value)}[/]"
 
     @staticmethod
     def emphasis(value: object) -> str:
         """Return a value styled to stand out inside a message."""
-        return f"[bold yellow]{escape(str(value))}[/]"
+        return f"[bold yellow]{_outside_value(value)}[/]"
+
+
+def _outside_value(value: object) -> str:
+    """Return a value from the outside, safe to put inside a message.
+
+    Markup in it stays text, and it never breaks the line: on GitHub Actions
+    a line of its own starting with "::" would be read as a command.
+    """
+    text = " ".join(str(value).splitlines())
+    return escape(text)
