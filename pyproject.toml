@@ -72,7 +72,7 @@ dev = [
   "pytest==9.2.0",
   "pytest-asyncio==1.4.1.post1",
   "pytest-cov==7.1.0",
-  "ruff==0.17.3",
+  "ruff==0.17.4",
   "shellcheck-py==0.11.0.1",
   "syrupy==6.1.1",
   "ty==0.0.99",
