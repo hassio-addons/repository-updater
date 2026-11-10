@@ -71,7 +71,7 @@ class AsyncTyper(SyncTyper):
     ) -> Callable[
         [Callable[_P, Coroutine[Any, Any, _R]]],
         Callable[_P, Coroutine[Any, Any, _R]],
-    ]:  # ty: ignore[invalid-method-override]
+    ]:  # ty: ignore[incompatible-method-override]
         """Create a new typer command."""
         super_command = super().command(
             name,
