@@ -77,7 +77,7 @@ dev = [
   "syrupy==7.0.3",
   "ty==0.0.107",
   "yamllint==1.38.0",
-  "zizmor==1.32.0",
+  "zizmor==1.33.1",
 ]
 
 [tool.hatch.build.targets.wheel]
